@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.skybosi.imaginer.MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:weightSum="1">
+        <TextView
+            android:id="@+id/showFilepath"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:gravity="center"
+            android:text="show picture path here"
+            android:layout_weight="0.03"/>
+        <SurfaceView
+            android:id="@+id/surface"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.9" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:orientation="horizontal"
+            android:layout_gravity="bottom"
+            android:gravity="center"
+            android:layout_weight="0.07"
+            android:weightSum="1">
+            <!--<EditText-->
+                <!--android:id="@+id/nextStep"-->
+                <!--android:layout_width="0dp"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_margin="5dp"-->
+                <!--android:gravity="center"-->
+                <!--android:hint="1"-->
+                <!--android:layout_weight="0.45"/>-->
+            <Button
+                android:id="@+id/nextPoint"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="next"
+                android:layout_weight="0.45"/>
+            <ImageButton
+                android:id="@+id/openSD"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/openfile"
+                android:layout_margin="5dp"
+                android:layout_weight="0.1">
+            </ImageButton>
+        </LinearLayout>
+
+    </LinearLayout>
+
+
+</android.support.constraint.ConstraintLayout>

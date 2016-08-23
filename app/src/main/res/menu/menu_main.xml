@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/pcm2amr" android:title="pcm to amr" />
+    <item android:id="@+id/amr2silk" android:title="amr to silk" />
+    <item android:id="@+id/silk2amr" android:title="slik to amr" />
+</menu>
+
+    <!--
+    <menu xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools" tools:context=".MainActivity">
+        <item android:id="@+id/action_settings" android:title="@string/action_settings"
+            android:orderInCategory="100" app:showAsAction="never" />
+    </menu>
+    -->

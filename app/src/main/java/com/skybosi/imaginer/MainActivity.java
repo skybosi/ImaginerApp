@@ -121,17 +121,19 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         @Override
         public void run() {
             super.run();
-            Canvas canvas = holder.lockCanvas();
             Bitmap bm = null;
             bm = BitmapFactory.decodeFile(bmpFile);
-            if (bm == null && !bmpFile.isEmpty()) {
-                mHandler.sendEmptyMessage(0);
+            if (bm == null ) {
+                if(!bmpFile.isEmpty()) {//is not a picture
+                    mHandler.sendEmptyMessage(0);
+                }
+            }else {
+                Canvas canvas = holder.lockCanvas();
+                int left = (canvas.getWidth() - bm.getWidth()) / 2;
+                int top = (canvas.getHeight() - bm.getHeight()) / 2;
+                canvas.drawBitmap(bm, left, top, new Paint());
                 holder.unlockCanvasAndPost(canvas);
             }
-            int left = (canvas.getWidth() - bm.getWidth())/2;
-            int top =  (canvas.getHeight() - bm.getHeight())/2;
-            canvas.drawBitmap(bm, left, top, new Paint());
-            holder.unlockCanvasAndPost(canvas);
         }
 
         void mystop() {

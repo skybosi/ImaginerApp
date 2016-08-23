@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -24,6 +25,8 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -57,6 +60,7 @@ public class FileView extends Activity{
     }
     protected  List<String> loadPathFile(String path){
         List<String> files = new ArrayList<String>();
+        List<String> dirs = new ArrayList<String>();
         if(path != null) {
             try {
                 currentPath = path;
@@ -64,20 +68,39 @@ public class FileView extends Activity{
                 File lsFile = new File(path);
                 //控制最高目录路径（这里设置为/storage
                 if (!path.equals("/storage")) {
-                    files.add("..");
+                    dirs.add("..");
                 }
                 if (lsFile.listFiles().length > 0) {
                     for (File file : lsFile.listFiles(Filter)) {
-                        files.add(file.getName());
+                        if(file.isDirectory())
+                            dirs.add(file.getName());
+                        else
+                            files.add(file.getName());
                     }
                 }
+
+                //sort by name
+                Collections.sort(dirs, new Comparator<String>() {
+                    @Override
+                    public int compare(String o1, String o2) {
+                        return o1.compareTo(o2);
+                    }
+                });
+                Collections.sort(files, new Comparator<String>() {
+                    @Override
+                    public int compare(String o1, String o2) {
+                        return o1.compareTo(o2);
+                    }
+                });
+
             } catch (Exception e) {
                 //
             }
         }
         else
             return mfiles;
-        return files;
+            dirs.addAll(files);
+        return dirs;
     }
 
     private boolean checkSdpath() {
@@ -264,8 +287,17 @@ public class FileView extends Activity{
                     if (!file_name.equals("..")) {
                         if(currentPath.equals("/"))
                             FileNum.setText(new File(currentPath  + file_name).listFiles().length + " 项    ");
-                        else
-                            FileNum.setText(new File(currentPath + "/" + file_name).listFiles().length + " 项    ");
+                        else {
+                            try {
+                                File lsFile = new File(currentPath + "/" + file_name);
+                                int lenth = lsFile.listFiles().length;
+                                if ( lenth > 0) {
+                                    FileNum.setText(lenth +" 项    ");
+                                }
+                            }catch(Exception e){
+                                Log.e("error", "getView: "+e.toString());
+                            }
+                        }
                     }
                     else {
                         FileNum.setText(new File(currentPath).listFiles().length + " 项    ");

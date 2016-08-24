@@ -293,6 +293,8 @@ public class FileView extends Activity{
                                 int lenth = lsFile.listFiles().length;
                                 if ( lenth > 0) {
                                     FileNum.setText(lenth +" 项    ");
+                                }else {
+                                    FileNum.setText("0 项    ");
                                 }
                             }catch(Exception e){
                                 Log.e("error", "getView: "+e.toString());
@@ -300,7 +302,7 @@ public class FileView extends Activity{
                         }
                     }
                     else {
-                        FileNum.setText(new File(currentPath).listFiles().length + " 项    ");
+                        FileNum.setText(new File(currentPath).getParentFile().listFiles().length + " 项    ");
                     }
                 }
             }else

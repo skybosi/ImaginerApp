@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
@@ -69,10 +70,11 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private int top = 0;
     private Bitmap bm = null;
     //private Canvas canvas = null;
-    private float focuScale = 2;//foucs scale
+    private int focuScale = 4;//foucs scale
     private String TAG = "Imaginer";
     private static boolean isExit = false;
     private SurfaceHolder holder = null;
+    private int resetColor = Color.RED;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,7 +104,6 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             public void surfaceDestroyed(SurfaceHolder arg0) {
                 if (thread != null)
                     thread.mystop();
-                isPictue = false;
             }
 
             @Override
@@ -168,19 +169,16 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         @Override
         public void run() {
             super.run();
-            while(true) {
-                if(refresh) {
-                    bm = BitmapFactory.decodeFile(bmpFile);
-                    if (bm == null) {
-                        if (!bmpFile.isEmpty()) {//is not a picture
-                            mHandler.sendEmptyMessage(0);
-                        }
-                    } else {
-                        drawBmp(holder, bm);
-                        isPictue = true;
-                    }
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inMutable = true;//set Mutable,so can setpixel
+            bm = BitmapFactory.decodeFile(bmpFile, options);
+            if (bm == null) {
+                if (!bmpFile.isEmpty()) {//is not a picture
+                    mHandler.sendEmptyMessage(0);
                 }
-                refresh = false;
+            } else {
+                drawBmp(holder, bm);
+                isPictue = true;
             }
         }
 
@@ -226,25 +224,40 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     }
 
     private void fullHere(float x, float y) {
-        float scaleWidth = focuScale;
-        float scaleHeight = focuScale;
-        // 创建操作图片用的matrix对象
+        isExit = false;
+        int newScale = (focuScale << 1) + 1;
+        float scaleWidth = canvsWidth / newScale;
+        float scaleHeight = canvsWidth / newScale;
+        int px = (int) x - left;
+        int py = (int) y - top;
+        int pixelxy = bm.getPixel(px, py);
+        int cx = px - focuScale;
+        int cy = py - focuScale;
+        if (cx < 0) {cx = 0;}
+        if (cy < 0) {cy = 0;}
+        bm.setPixel(px, py, resetColor);
+        Log.i(TAG, "fullHere: createBitmap error" + pixelxy);
         Matrix matrix = new Matrix();
         // 缩放图片动作
         matrix.postScale(scaleWidth, scaleHeight);
         // 新得到的图片是原图片经过变换填充到整个屏幕的图片
         try {
-            Bitmap picNewRes = Bitmap.createBitmap(bm, (int) x - left, (int) y - top, 100, 100, matrix, true);
-            // 放在画布上
-            //canvas.drawBitmap(picNewRes, 0, 0, new Paint());
-            Bitmap showPic = Bitmap.createBitmap(picNewRes, 0, 0, picNewRes.getWidth(), picNewRes.getHeight());
-
+            Bitmap picNewRes = Bitmap.createBitmap(bm, cx, cy, newScale, newScale, matrix, true);
+            int picWidth = picNewRes.getWidth();
+            int picHight = picNewRes.getHeight();
+            Bitmap showPic = Bitmap.createBitmap(picNewRes, 0, 0, picWidth, picHight);
             poritonView = new PoritionView(this);
-            poritonView.setBitmapShow(showPic, picNewRes.getWidth(), picNewRes.getHeight());
+            int picleft = (canvsWidth - picWidth) / 2;
+            int pictop = (canvsHight - picHight) / 2;
+            poritonView.setBitmapShow(showPic, picleft, pictop);
             setContentView(poritonView);
         } catch (Exception e) {
             Log.e(TAG, "fullHere: createBitmap error" + e.toString());
         }
+    }
+
+    public void setfocuScale(int focuscale){
+        focuScale = focuscale;
     }
 
     private boolean inPicture(float x, float y) {
@@ -255,8 +268,9 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     }
 
     @Override
-    public void onBackPressed() {
-        thread.refresh = true;
+    public synchronized void onBackPressed() {
+        poritonView.setBitmapShow(bm, left, top);
+        setContentView(poritonView);
         exit();
     }
 
@@ -278,6 +292,10 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         bmpWidth = bmp.getWidth();
         left = (canvsWidth - bmpWidth) / 2;
         top = (canvsHight - bmpHight) / 2;
+        if(left < 0)
+            left = 0;
+        if(top < 0)
+            top = 0;
         canvas.drawBitmap(bm, left, top, new Paint());
         holder.unlockCanvasAndPost(canvas);
     }
@@ -303,7 +321,6 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             */
 
         /*
-        // 方法2
         DisplayMetrics dm = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(dm);
         int screenWidth = dm.widthPixels;                //水平分辨率

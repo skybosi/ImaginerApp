@@ -31,7 +31,7 @@ import java.util.Random;
 
 import android.graphics.Matrix;
 
-/* PoritionView ¿‡*/
+/* PoritionView Á±ª*/
 
 class PoritionView extends View {
 
@@ -206,9 +206,9 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         }
     }
 
-    //  µœ÷onTouchEvent∑Ω∑®
+    // ÂÆûÁé∞onTouchEventÊñπÊ≥ï
     public boolean onTouchEvent(MotionEvent event) {
-        // »Áπ˚ «∞¥œ¬≤Ÿ◊˜
+        // Â¶ÇÊûúÊòØÊåâ‰∏ãÊìç‰Ωú
         if (event.getAction() == MotionEvent.ACTION_DOWN && isPictue) {
             float x = event.getX();
             float y = event.getY();
@@ -217,7 +217,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 Toast.makeText(MainActivity.this, "X:" + x + " Y:" + y, Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(MainActivity.this, "onTouchEvent: Out oyf picture", Toast.LENGTH_SHORT).show();
-                Log.d("Imaginer", "onTouchEvent: Out oyf picture");
+                Log.d(TAG, "onTouchEvent: Out oyf picture");
             }
         }
         return super.onTouchEvent(event);
@@ -231,6 +231,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         int px = (int) x - left;
         int py = (int) y - top;
         int pixelxy = bm.getPixel(px, py);
+        Toast.makeText(getApplicationContext(), "RGB:" + Integer.toHexString(pixelxy),  Toast.LENGTH_SHORT).show();
         int cx = px - focuScale;
         int cy = py - focuScale;
         if (cx < 0) {cx = 0;}
@@ -238,18 +239,19 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         bm.setPixel(px, py, resetColor);
         Log.i(TAG, "fullHere: createBitmap error" + pixelxy);
         Matrix matrix = new Matrix();
-        // Àı∑≈Õº∆¨∂Ø◊˜
+        // Áº©ÊîæÂõæÁâáÂä®‰Ωú
+        //matrix.setScale(scaleWidth,scaleHeight);
         matrix.postScale(scaleWidth, scaleHeight);
-        // –¬µ√µΩµƒÕº∆¨ «‘≠Õº∆¨æ≠π˝±‰ªªÃÓ≥‰µΩ’˚∏ˆ∆¡ƒªµƒÕº∆¨
+        // Êñ∞ÂæóÂà∞ÁöÑÂõæÁâáÊòØÂéüÂõæÁâáÁªèËøáÂèòÊç¢Â°´ÂÖÖÂà∞Êï¥‰∏™Â±èÂπïÁöÑÂõæÁâá
         try {
             Bitmap picNewRes = Bitmap.createBitmap(bm, cx, cy, newScale, newScale, matrix, true);
             int picWidth = picNewRes.getWidth();
             int picHight = picNewRes.getHeight();
-            Bitmap showPic = Bitmap.createBitmap(picNewRes, 0, 0, picWidth, picHight);
+            //Bitmap showPic = Bitmap.createBitmap(picNewRes, 0, 0, picWidth, picHight);
             poritonView = new PoritionView(this);
             int picleft = (canvsWidth - picWidth) / 2;
             int pictop = (canvsHight - picHight) / 2;
-            poritonView.setBitmapShow(showPic, picleft, pictop);
+            poritonView.setBitmapShow(picNewRes, picleft, pictop);
             setContentView(poritonView);
         } catch (Exception e) {
             Log.e(TAG, "fullHere: createBitmap error" + e.toString());
@@ -277,7 +279,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private void exit() {
         if (!isExit) {
             isExit = true;
-            Toast.makeText(getApplicationContext(), "‘Ÿ∞¥“ª¥Œ∫ÛÕÀº¸ÕÀ≥ˆ÷˜≥Ã–Ú£°", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "ÂÜçÊåâ‰∏ÄÊ¨°ÂêéÈÄÄÈîÆÈÄÄÂá∫‰∏ªÁ®ãÂ∫èÔºÅ", Toast.LENGTH_SHORT).show();
         } else {
             this.finish();
         }
@@ -323,6 +325,6 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         /*
         DisplayMetrics dm = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(dm);
-        int screenWidth = dm.widthPixels;                //ÀÆ∆Ω∑÷±Ê¬ 
-        int screenHeight = dm.heightPixels;              //¥π÷±∑÷±Ê¬ 
+        int screenWidth = dm.widthPixels;                //Ê∞¥Âπ≥ÂàÜËæ®Áéá
+        int screenHeight = dm.heightPixels;              //ÂûÇÁõ¥ÂàÜËæ®Áéá
         */

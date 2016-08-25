@@ -10,6 +10,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -31,37 +33,11 @@ import java.util.Random;
 
 import android.graphics.Matrix;
 
-/* PoritionView 类*/
-
-class PoritionView extends View {
-
-    private Bitmap showPic = null;
-    private int startX = 0;
-    private int startY = 0;
-
-    public PoritionView(Context context) {
-        super(context);
-    }
-
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-        canvas.drawBitmap(showPic, startX, startY, null);
-    }
-
-    public void setBitmapShow(Bitmap b, int x, int y) {
-        showPic = b;
-        startX = x;
-        startY = y;
-    }
-}
-
 public class MainActivity extends Activity implements View.OnClickListener, View.OnLongClickListener {
     private String bmpFile = null;
     private Handler mHandler = null;
     private final static int REQUEST_CODE = 1;
     private boolean isPictue = false;
-    private PoritionView poritonView = null;
     private int canvsHight = 0;
     private int canvsWidth = 0;
     private int bmpHight = 0;
@@ -75,6 +51,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private static boolean isExit = false;
     private SurfaceHolder holder = null;
     private int resetColor = Color.RED;
+    private Canvas canvas = null;
+    private Paint paint = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -245,14 +223,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         // 新得到的图片是原图片经过变换填充到整个屏幕的图片
         try {
             Bitmap picNewRes = Bitmap.createBitmap(bm, cx, cy, newScale, newScale, matrix, true);
-            int picWidth = picNewRes.getWidth();
-            int picHight = picNewRes.getHeight();
-            //Bitmap showPic = Bitmap.createBitmap(picNewRes, 0, 0, picWidth, picHight);
-            poritonView = new PoritionView(this);
-            int picleft = (canvsWidth - picWidth) / 2;
-            int pictop = (canvsHight - picHight) / 2;
-            poritonView.setBitmapShow(picNewRes, picleft, pictop);
-            setContentView(poritonView);
+            drawBmp(holder, picNewRes);
         } catch (Exception e) {
             Log.e(TAG, "fullHere: createBitmap error" + e.toString());
         }
@@ -271,8 +242,9 @@ public class MainActivity extends Activity implements View.OnClickListener, View
 
     @Override
     public synchronized void onBackPressed() {
-        poritonView.setBitmapShow(bm, left, top);
-        setContentView(poritonView);
+        if (bm != null) {
+            drawBmp(holder,bm);
+        }
         exit();
     }
 
@@ -285,20 +257,42 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         }
     }
 
-    //surfaceview draw on the canvas
+    //surfaceview draw on the canvas center
     private void drawBmp(SurfaceHolder holder, Bitmap bmp) {
-        Canvas canvas = holder.lockCanvas();
+        canvas = holder.lockCanvas();
         canvsHight = canvas.getHeight();
         canvsWidth = canvas.getWidth();
-        bmpHight = bmp.getHeight();
-        bmpWidth = bmp.getWidth();
-        left = (canvsWidth - bmpWidth) / 2;
-        top = (canvsHight - bmpHight) / 2;
-        if(left < 0)
-            left = 0;
-        if(top < 0)
-            top = 0;
-        canvas.drawBitmap(bm, left, top, new Paint());
+        if(paint == null)
+        {
+            paint = new Paint();
+        }else{
+            //clean old draw
+            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+            canvas.drawPaint(paint);
+            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC));
+        }
+        if(bmp.equals(bm)) {
+            bmpHight = bmp.getHeight();
+            bmpWidth = bmp.getWidth();
+            left = (canvsWidth - bmpWidth) / 2;
+            top = (canvsHight - bmpHight) / 2;
+            if (left < 0)
+                left = 0;
+            if (top < 0)
+                top = 0;
+            canvas.drawBitmap(bm, left, top, paint);
+        }else
+        {
+            int picWidth = bmp.getWidth();
+            int picHight = bmp.getHeight();
+            int picleft = (canvsWidth - picWidth) / 2;
+            int pictop = (canvsHight - picHight) / 2;
+            if(picleft < 0)
+                picleft = 0;
+            if(pictop < 0)
+                pictop = 0;
+            canvas.drawBitmap(bmp, picleft, pictop, paint);
+        }
         holder.unlockCanvasAndPost(canvas);
     }
 

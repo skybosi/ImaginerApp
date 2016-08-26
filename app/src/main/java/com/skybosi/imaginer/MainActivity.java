@@ -53,6 +53,11 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private int resetColor = Color.RED;
     private Canvas canvas = null;
     private Paint paint = null;
+    private int nextSteps = 0;
+    private int tmpSteps = 1;
+    private int startX = -1;
+    private int startY = -1;
+    private boolean isBack = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +67,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         ImageButton ib = (ImageButton) findViewById(R.id.openSD);
         Button bt = (Button) findViewById(R.id.nextPoint);
         ib.setOnClickListener(this);
+        bt.setOnClickListener(this);
         bt.setOnLongClickListener(this);
         mHandler = new Handler() {
             @Override
@@ -106,6 +112,12 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     public void onClick(View v) {
         if (v.getId() == R.id.openSD) {
             loadFile();
+        } else if (v.getId() == R.id.nextPoint) {
+            if (tmpSteps <= 1)
+                nextSteps = 1;
+            else {
+                nextSteps = tmpSteps;
+            }
         }
     }
 
@@ -117,46 +129,73 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     @Override
     public boolean onLongClick(View v) {
         if (v.getId() == R.id.nextPoint) {
-            //String step = null;
             final EditText inputServer = new EditText(this);
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Next Step Set").setIcon(android.R.drawable.ic_dialog_info).setView(inputServer)
                     .setNegativeButton("CANCEL", null);
             builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
-                    inputServer.getText().toString();
-                    ((Button) findViewById(R.id.nextPoint)).setText("NEXT" + "(" + inputServer.getText().toString() + ")");
+                    tmpSteps  = Integer.parseInt(inputServer.getText().toString());
+                    if(tmpSteps > 0) {
+                        ((Button) findViewById(R.id.nextPoint)).setText("NEXT" + "(" + inputServer.getText().toString() + ")");
+                    }else{
+                        ((Button) findViewById(R.id.nextPoint)).setText("NEXT");
+                    }
                 }
             });
             builder.show();
         }
-
         return false;
     }
-
+    //init the picture that will be deal with
+    private void init_bmp(){
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inMutable = true;//set Mutable,so can setpixel
+        bm = BitmapFactory.decodeFile(bmpFile, options);
+        if (bm == null) {
+            if (!bmpFile.isEmpty()) {//is not a picture
+                mHandler.sendEmptyMessage(0);
+            }
+        } else {
+            drawBmp(holder, bm);
+            isPictue = true;
+        }
+    }
 
     class MyThread extends Thread {
         SurfaceHolder holder;
         boolean refresh = true;
         Random random = new Random(0);
-
         public MyThread(SurfaceHolder holder) {
             this.holder = holder;
         }
-
         @Override
         public void run() {
             super.run();
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inMutable = true;//set Mutable,so can setpixel
-            bm = BitmapFactory.decodeFile(bmpFile, options);
-            if (bm == null) {
-                if (!bmpFile.isEmpty()) {//is not a picture
-                    mHandler.sendEmptyMessage(0);
+            init_bmp();
+            int ranLeft = -1;
+            int ranTop =  -1;
+            while(refresh){
+                if(nextSteps-- > 0 && startX > 0 && startX > 0) {
+                    if(isBack || ranLeft < 0 && ranTop < 0) {
+                        ranLeft = startX;
+                        ranTop = startY;
+                        isBack = false;
+                    }
+                    ranLeft += random.nextInt(2);
+                    ranTop += random.nextInt(2);
+                    //can not out of picture
+                    if (inPicture(ranLeft, ranTop)) {
+                        fullHere(ranLeft, ranTop);
+                    } else {
+                        break;
+                    }
                 }
-            } else {
-                drawBmp(holder, bm);
-                isPictue = true;
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -188,11 +227,13 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     public boolean onTouchEvent(MotionEvent event) {
         // 如果是按下操作
         if (event.getAction() == MotionEvent.ACTION_DOWN && isPictue) {
-            float x = event.getX();
-            float y = event.getY();
-            if (inPicture(x, y)) {
-                fullHere(x, y);
-                Toast.makeText(MainActivity.this, "X:" + x + " Y:" + y, Toast.LENGTH_SHORT).show();
+            float touchX = event.getX();
+            float touchY = event.getY();
+            if (inPicture(touchX, touchY)) {
+                startX = (int)touchX;
+                startY = (int)touchY;
+                fullHere(startX,startY);
+                Toast.makeText(MainActivity.this, "X:" + touchX + " Y:" +touchY, Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(MainActivity.this, "onTouchEvent: Out oyf picture", Toast.LENGTH_SHORT).show();
                 Log.d(TAG, "onTouchEvent: Out oyf picture");
@@ -201,7 +242,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         return super.onTouchEvent(event);
     }
 
-    private void fullHere(float x, float y) {
+    private void fullHere(int x, int y) {
         isExit = false;
         int newScale = (focuScale << 1) + 1;
         float scaleWidth = canvsWidth / newScale;
@@ -209,7 +250,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         int px = (int) x - left;
         int py = (int) y - top;
         int pixelxy = bm.getPixel(px, py);
-        Toast.makeText(getApplicationContext(), "RGB:" + Integer.toHexString(pixelxy),  Toast.LENGTH_SHORT).show();
+        //Toast.makeText(getApplicationContext(), "RGB:" + Integer.toHexString(pixelxy),  Toast.LENGTH_SHORT).show();
         int cx = px - focuScale;
         int cy = py - focuScale;
         if (cx < 0) {cx = 0;}
@@ -243,7 +284,10 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     @Override
     public synchronized void onBackPressed() {
         if (bm != null) {
+            cleanScreen();
             drawBmp(holder,bm);
+            startX = startY = -1;
+            isBack = true;
         }
         exit();
     }
@@ -253,20 +297,20 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             isExit = true;
             Toast.makeText(getApplicationContext(), "再按一次后退键退出主程序！", Toast.LENGTH_SHORT).show();
         } else {
+            thread.mystop();
             this.finish();
         }
     }
 
     //surfaceview draw on the canvas center
-    private void drawBmp(SurfaceHolder holder, Bitmap bmp) {
-        canvas = holder.lockCanvas();
+    private void drawBmp(SurfaceHolder sholder, Bitmap bmp) {
+        canvas = sholder.lockCanvas();
         canvsHight = canvas.getHeight();
         canvsWidth = canvas.getWidth();
         if(paint == null)
         {
             paint = new Paint();
         }else{
-            //clean old draw
             paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
             canvas.drawPaint(paint);
             paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC));
@@ -293,9 +337,17 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 pictop = 0;
             canvas.drawBitmap(bmp, picleft, pictop, paint);
         }
-        holder.unlockCanvasAndPost(canvas);
+        sholder.unlockCanvasAndPost(canvas);
     }
 
+    private void cleanScreen() {
+        //clean old draw
+        canvas = holder.lockCanvas();
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+        canvas.drawPaint(paint);
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC));
+        holder.unlockCanvasAndPost(canvas);
+    }
 }
 
 

@@ -42,8 +42,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private int canvsWidth = 0;
     private int bmpHight = 0;
     private int bmpWidth = 0;
-    private int left = 0;
-    private int top = 0;
+    private int left = 0;//相对于canvas，不是相对于整个屏幕（左上）
+    private int top = 0; //相对于canvas，不是相对于整个屏幕（左上）
     private Bitmap bm = null;
     //private Canvas canvas = null;
     private int focuScale = 4;//foucs scale
@@ -58,12 +58,22 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private int startX = -1;
     private int startY = -1;
     private boolean isBack = false;
+    private int[] location = new int[2];
+    private SurfaceView sfv = null;
+
+    //get surfaceview's location for the location on the picture 
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        sfv.getLocationOnScreen(location);
+        sfv.getLocationInWindow(location);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        SurfaceView sfv = (SurfaceView) findViewById(R.id.surface);
+        sfv = (SurfaceView) findViewById(R.id.surface);
         ImageButton ib = (ImageButton) findViewById(R.id.openSD);
         Button bt = (Button) findViewById(R.id.nextPoint);
         ib.setOnClickListener(this);
@@ -247,8 +257,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         int newScale = (focuScale << 1) + 1;
         float scaleWidth = canvsWidth / newScale;
         float scaleHeight = canvsWidth / newScale;
-        int px = (int) x - left;
-        int py = (int) y - top;
+        int px = x - left - location[0]; //获取相对于图片左上点的x
+        int py = y - top - location[1];  //获取相对于图片左上点的y
         int pixelxy = bm.getPixel(px, py);
         //Toast.makeText(getApplicationContext(), "RGB:" + Integer.toHexString(pixelxy),  Toast.LENGTH_SHORT).show();
         int cx = px - focuScale;
@@ -373,4 +383,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         getWindowManager().getDefaultDisplay().getMetrics(dm);
         int screenWidth = dm.widthPixels;                //水平分辨率
         int screenHeight = dm.heightPixels;              //垂直分辨率
+
+        WindowManager wm = this.getWindowManager();
+        int width = wm.getDefaultDisplay().getWidth();
+        int height = wm.getDefaultDisplay().getHeight();
         */

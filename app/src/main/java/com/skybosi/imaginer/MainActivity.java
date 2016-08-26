@@ -133,6 +133,12 @@ public class MainActivity extends Activity implements View.OnClickListener, View
 
     private void loadFile() {
         Intent intent = new Intent("android.intent.action.FILE");
+        if(bmpFile != null) {//传入上次查找的路径
+            Bundle bundle = new Bundle();
+            String lastPath = bmpFile.substring(0, bmpFile.lastIndexOf("/"));
+            bundle.putString("lastPath", lastPath);
+            intent.putExtras(bundle);
+        }
         startActivityForResult(intent, REQUEST_CODE);
     }
 
@@ -307,7 +313,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             isExit = true;
             Toast.makeText(getApplicationContext(), "再按一次后退键退出主程序！", Toast.LENGTH_SHORT).show();
         } else {
-            thread.mystop();
+            if (thread != null)
+                thread.mystop();
             this.finish();
         }
     }
@@ -317,8 +324,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         canvas = sholder.lockCanvas();
         canvsHight = canvas.getHeight();
         canvsWidth = canvas.getWidth();
-        if(paint == null)
-        {
+        if (paint == null) {
             paint = new Paint();
         }else{
             paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
@@ -335,8 +341,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             if (top < 0)
                 top = 0;
             canvas.drawBitmap(bm, left, top, paint);
-        }else
-        {
+        } else {
             int picWidth = bmp.getWidth();
             int picHight = bmp.getHeight();
             int picleft = (canvsWidth - picWidth) / 2;

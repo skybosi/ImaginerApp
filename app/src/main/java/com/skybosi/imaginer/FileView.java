@@ -45,6 +45,7 @@ public class FileView extends Activity{
     TextView tvCurrpath = null;
     ListView fileList = null;
     String fullfilePath = null;
+    private String lastPath = null;
     private static boolean isExit = false;
     final  static  FileFilter Filter = new FileFilter() {
         public boolean accept(File pathname) {
@@ -56,7 +57,16 @@ public class FileView extends Activity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.file_listview);
-        init();
+        tvCurrpath = (TextView) findViewById(R.id.currPath);
+        Intent intent = this.getIntent(); //用于激活它的意图对象
+        Bundle bundle = intent.getExtras();
+        if(bundle != null){
+            lastPath = bundle.getString("lastPath");
+            mfiles = loadPathFile(lastPath);
+        } else {
+            init();//以sdcard为起始路径初始化文件浏览器
+        }
+        initAdapter();
     }
     protected  List<String> loadPathFile(String path){
         List<String> files = new ArrayList<String>();
@@ -94,7 +104,7 @@ public class FileView extends Activity{
                 });
 
             } catch (Exception e) {
-                //
+                Log.e("error", "getView: "+e.toString());
             }
         }
         else
@@ -142,11 +152,12 @@ public class FileView extends Activity{
         }
     }
     private void init() {
-        tvCurrpath = (TextView) findViewById(R.id.currPath);
-        if(checkSdpath()) {
+        if (checkSdpath()) {
             SDpath = Environment.getExternalStorageDirectory().getAbsolutePath();
             mfiles = loadPathFile(SDpath);
         }
+    }
+    private void initAdapter() {
         fileList = (ListView) findViewById(R.id.listview);
         mAdapter = new MyAdapter();
         fileList.setAdapter(mAdapter);

@@ -37,11 +37,10 @@ import java.util.Random;
 
 import android.graphics.Matrix;
 
-public class MainActivity extends Activity implements View.OnClickListener, View.OnLongClickListener,OnMenuItemClickListener {
+public class MainActivity extends Activity implements View.OnClickListener, View.OnLongClickListener, OnMenuItemClickListener {
     private String bmpFile = null;
     private Handler mHandler = null;
     private final static int REQUEST_CODE = 1;
-    private boolean isPictue = false;
     private int canvsHight = 0;
     private int canvsWidth = 0;
     private int bmpHight = 0;
@@ -65,6 +64,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private int[] location = new int[2];
     private SurfaceView sfv = null;
     private Toolbar toolbar = null;
+    private boolean currFoucStatus = false;//false:is src picture;true:is foucs picture
 
     //get surfaceview's location for the location on the picture 
     @Override
@@ -95,6 +95,9 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 switch (msg.what) {
                     case 0:
                         Toast.makeText(getApplicationContext(), "You choose is not a picture!", Toast.LENGTH_LONG).show();
+                    case 1:
+                        Toast.makeText(MainActivity.this, "This getBoundray loop is Finish", Toast.LENGTH_SHORT).show();
+                        break;
                     default:
                         break;
                 }
@@ -122,6 +125,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
 
             }
         });
+        Toast.makeText(MainActivity.this, "You can long click to set next steps you Want!", Toast.LENGTH_LONG).show();
     }
 
     MyThread thread = null;
@@ -142,7 +146,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private void loadFile() {
         isExit = false;
         Intent intent = new Intent("android.intent.action.FILE");
-        if(bmpFile != null) {//传入上次查找的路径
+        if (bmpFile != null) {//传入上次查找的路径
             Bundle bundle = new Bundle();
             String lastPath = bmpFile.substring(0, bmpFile.lastIndexOf("/"));
             bundle.putString("lastPath", lastPath);
@@ -160,11 +164,16 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                     .setNegativeButton("CANCEL", null);
             builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
-                    tmpSteps = Integer.parseInt(inputServer.getText().toString());
-                    if (tmpSteps > 0) {
-                        ((Button) findViewById(R.id.nextPoint)).setText("NEXT" + "(" + inputServer.getText().toString() + ")");
-                    } else {
-                        ((Button) findViewById(R.id.nextPoint)).setText("NEXT");
+                    try {
+                        tmpSteps = Integer.parseInt(inputServer.getText().toString());
+                        if (tmpSteps > 0) {
+                            ((Button) findViewById(R.id.nextPoint)).setText("NEXT" + "(" + inputServer.getText().toString() + ")");
+                        } else {
+                            ((Button) findViewById(R.id.nextPoint)).setText("NEXT");
+                        }
+                    } catch (Exception e) {
+                        Toast.makeText(MainActivity.this, "Sorry;Yours Input type is Error,please try again!", Toast.LENGTH_SHORT).show();
+                        Log.e(TAG, "onClick:input type error");
                     }
                 }
             });
@@ -174,7 +183,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     }
 
     //init the picture that will be deal with
-    private void init_bmp(){
+    private void init_bmp() {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inMutable = true;//set Mutable,so can setpixel
         bm = BitmapFactory.decodeFile(bmpFile, options);
@@ -184,15 +193,14 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             }
         } else {
             drawBmp(holder, bm);
-            isPictue = true;
+            currFoucStatus = false;
         }
     }
 
     @Override
     public boolean onMenuItemClick(MenuItem item) {
         int menuItemId = item.getItemId();
-        switch (menuItemId)
-        {
+        switch (menuItemId) {
             case R.id.about:
                 new AboutDialog(this).show();
                 break;
@@ -203,7 +211,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                         .setNegativeButton("CANCEL", null);
                 builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        focuScale  = Integer.parseInt(inputServer.getText().toString());
+                        focuScale = Integer.parseInt(inputServer.getText().toString());
                     }
                 });
                 builder.show();
@@ -218,20 +226,22 @@ public class MainActivity extends Activity implements View.OnClickListener, View
 
     class MyThread extends Thread {
         SurfaceHolder holder;
-        boolean refresh = true;
+        private boolean refresh = true;
         Random random = new Random(0);
+
         public MyThread(SurfaceHolder holder) {
             this.holder = holder;
         }
+
         @Override
         public void run() {
             super.run();
             init_bmp();
             int ranLeft = -1;
-            int ranTop =  -1;
-            while(refresh){
-                if(nextSteps-- > 0 && startX > 0 && startX > 0) {
-                    if(isBack || ranLeft < 0 && ranTop < 0) {
+            int ranTop = -1;
+            while (refresh) {
+                if (nextSteps-- > 0 && startX > 0 && startY > 0) {
+                    if (isBack || ranLeft < 0 && ranTop < 0) {
                         ranLeft = startX;
                         ranTop = startY;
                         isBack = false;
@@ -242,7 +252,10 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                     if (inPicture(ranLeft, ranTop)) {
                         fullHere(ranLeft, ranTop);
                     } else {
-                        break;
+                        mHandler.sendEmptyMessage(1);
+                        nextSteps = 0;
+                        ranLeft = -1;
+                        ranTop = -1;
                     }
                 }
                 try {
@@ -251,6 +264,14 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                     e.printStackTrace();
                 }
             }
+        }
+
+        public boolean getRrefresh() {
+            return refresh;
+        }
+
+        public void setRefresh(boolean status) {
+            refresh = status;
         }
 
         void mystop() {
@@ -265,10 +286,6 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 Bundle bundle = data.getExtras();
                 bmpFile = bundle.getString("filename");
                 //Toast.makeText(MainActivity.this, bmpFile, Toast.LENGTH_LONG).show();
-
-                //toolbar.setTitle(bmpFile);//设置主标题
-                //toolbar.setT
-                //oolbar.setSubtitle("show file path");
                 ((TextView) findViewById(R.id.toolbar_title)).setText(bmpFile);
             }
         }
@@ -277,41 +294,41 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     // 实现onTouchEvent方法
     public boolean onTouchEvent(MotionEvent event) {
         // 如果是按下操作
-        if (event.getAction() == MotionEvent.ACTION_DOWN && isPictue) {
-            float touchX = event.getX();
-            float touchY = event.getY();
-            if (inPicture(touchX, touchY)) {
-                startX = (int)touchX;
-                startY = (int)touchY;
-                fullHere(startX,startY);
-                Toast.makeText(MainActivity.this, "X:" + touchX + " Y:" +touchY, Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(MainActivity.this, "onTouchEvent: Out oyf picture", Toast.LENGTH_SHORT).show();
-                Log.d(TAG, "onTouchEvent: Out oyf picture");
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            if (!currFoucStatus) {//at src picture
+                if (bm != null) {
+                    float touchX = event.getX();
+                    float touchY = event.getY();
+                    if (inPicture(touchX, touchY)) {
+                        startX = (int) touchX;
+                        startY = (int) touchY;
+                        fullHere(startX, startY);
+                        Toast.makeText(MainActivity.this, "X:" + touchX + " Y:" + touchY, Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(MainActivity.this, "onTouchEvent: Out oyf picture", Toast.LENGTH_SHORT).show();
+                        Log.d(TAG, "onTouchEvent: Out oyf picture");
+                    }
+                }
+            } else {//at foucs picture
+                nextSteps = 1;
             }
         }
         return super.onTouchEvent(event);
     }
 
     private void fullHere(int x, int y) {
-        DisplayMetrics dm = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(dm);
-        int screenWidth = dm.widthPixels;                //水平分辨率
-        int screenHeight = dm.heightPixels;              //垂直分辨率
-        float d0 = dm.density;
-        isExit = false;
         int newScale = (focuScale << 1) + 1;
         float scaleWidth = canvsWidth / newScale;
         float scaleHeight = canvsWidth / newScale;
         int px = x - left - location[0]; //获取相对于图片左上点的x
         int py = y - top - location[1];  //获取相对于图片左上点的y
-        int d1 =  bm.getDensity();
+        int d1 = bm.getDensity();
         int pixelxy = bm.getPixel(px, py);
         //Toast.makeText(getApplicationContext(), "RGB:" + Integer.toHexString(pixelxy),  Toast.LENGTH_SHORT).show();
         int cx = px - focuScale;
         int cy = py - focuScale;
-        if (cx < 0) {cx = 0;}
-        if (cy < 0) {cy = 0;}
+        if (cx < 0) { cx = 0; }
+        if (cy < 0) { cy = 0; }
         bm.setPixel(px, py, resetColor);
         Log.i(TAG, "fullHere: createBitmap error" + pixelxy);
         Matrix matrix = new Matrix();
@@ -321,16 +338,13 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         // 新得到的图片是原图片经过变换填充到整个屏幕的图片
         try {
             Bitmap picNewRes = Bitmap.createBitmap(bm, cx, cy, newScale, newScale, matrix, true);
-            int d2 = picNewRes.getDensity();
-            picNewRes.setDensity((int)(d1/scaleWidth));
-            int d3 = picNewRes.getDensity();
             drawBmp(holder, picNewRes);
         } catch (Exception e) {
             Log.e(TAG, "fullHere: createBitmap error" + e.toString());
         }
     }
 
-    public void setfocuScale(int focuscale){
+    public synchronized void setfocuScale(int focuscale) {
         focuScale = focuscale;
     }
 
@@ -345,11 +359,12 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     public synchronized void onBackPressed() {
         if (bm != null && startX != -1) {
             cleanScreen();
-            drawBmp(holder,bm);
+            drawBmp(holder, bm);
             startX = startY = -1;
             isBack = true;
+        } else {
+            exit();
         }
-        exit();
     }
 
     private void exit() {
@@ -370,12 +385,13 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         canvsWidth = canvas.getWidth();
         if (paint == null) {
             paint = new Paint();
-        }else{
+        } else {
             paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
             canvas.drawPaint(paint);
             paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC));
         }
-        if(bmp.equals(bm)) {
+        if (bmp.equals(bm)) {
+            currFoucStatus = false;
             bmpHight = bmp.getHeight();
             bmpWidth = bmp.getWidth();
             left = (canvsWidth - bmpWidth) / 2;
@@ -386,13 +402,15 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 top = 0;
             canvas.drawBitmap(bm, left, top, paint);
         } else {
+            isExit = false;
+            currFoucStatus = true;
             int picWidth = bmp.getWidth();
             int picHight = bmp.getHeight();
             int picleft = (canvsWidth - picWidth) / 2;
             int pictop = (canvsHight - picHight) / 2;
-            if(picleft < 0)
+            if (picleft < 0)
                 picleft = 0;
-            if(pictop < 0)
+            if (pictop < 0)
                 pictop = 0;
             canvas.drawBitmap(bmp, picleft, pictop, paint);
         }
@@ -411,8 +429,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     public class AboutDialog extends AlertDialog {
         public AboutDialog(Context context) {
             super(context);
-            final View view = getLayoutInflater().inflate(R.layout.about,null);
-            setTitle("Imaginer   v1.0.0" );
+            final View view = getLayoutInflater().inflate(R.layout.about, null);
+            setTitle("Imaginer   v1.0.0");
             setView(view);
         }
     }

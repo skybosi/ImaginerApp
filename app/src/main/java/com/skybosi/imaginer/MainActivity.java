@@ -13,9 +13,13 @@ import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.Toolbar.OnMenuItemClickListener;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -33,7 +37,7 @@ import java.util.Random;
 
 import android.graphics.Matrix;
 
-public class MainActivity extends Activity implements View.OnClickListener, View.OnLongClickListener {
+public class MainActivity extends Activity implements View.OnClickListener, View.OnLongClickListener,OnMenuItemClickListener {
     private String bmpFile = null;
     private Handler mHandler = null;
     private final static int REQUEST_CODE = 1;
@@ -60,6 +64,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private boolean isBack = false;
     private int[] location = new int[2];
     private SurfaceView sfv = null;
+    private Toolbar toolbar = null;
 
     //get surfaceview's location for the location on the picture 
     @Override
@@ -73,9 +78,13 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.inflateMenu(R.menu.menu_main);//设置右上角的填充菜单
+        toolbar.setOnMenuItemClickListener(this);
         sfv = (SurfaceView) findViewById(R.id.surface);
         ImageButton ib = (ImageButton) findViewById(R.id.openSD);
         Button bt = (Button) findViewById(R.id.nextPoint);
+        isExit = false;
         ib.setOnClickListener(this);
         bt.setOnClickListener(this);
         bt.setOnLongClickListener(this);
@@ -93,7 +102,6 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         };
         holder = sfv.getHolder();
         holder.addCallback(new SurfaceHolder.Callback() {
-
             @Override
             public void surfaceDestroyed(SurfaceHolder arg0) {
                 if (thread != null)
@@ -132,6 +140,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     }
 
     private void loadFile() {
+        isExit = false;
         Intent intent = new Intent("android.intent.action.FILE");
         if(bmpFile != null) {//传入上次查找的路径
             Bundle bundle = new Bundle();
@@ -151,10 +160,10 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                     .setNegativeButton("CANCEL", null);
             builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int which) {
-                    tmpSteps  = Integer.parseInt(inputServer.getText().toString());
-                    if(tmpSteps > 0) {
+                    tmpSteps = Integer.parseInt(inputServer.getText().toString());
+                    if (tmpSteps > 0) {
                         ((Button) findViewById(R.id.nextPoint)).setText("NEXT" + "(" + inputServer.getText().toString() + ")");
-                    }else{
+                    } else {
                         ((Button) findViewById(R.id.nextPoint)).setText("NEXT");
                     }
                 }
@@ -163,6 +172,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         }
         return false;
     }
+
     //init the picture that will be deal with
     private void init_bmp(){
         BitmapFactory.Options options = new BitmapFactory.Options();
@@ -176,6 +186,34 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             drawBmp(holder, bm);
             isPictue = true;
         }
+    }
+
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+        int menuItemId = item.getItemId();
+        switch (menuItemId)
+        {
+            case R.id.about:
+                new AboutDialog(this).show();
+                break;
+            case R.id.setFoucs:
+                final EditText inputServer = new EditText(this);
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("You Can set foucs Range").setIcon(android.R.drawable.ic_dialog_info).setView(inputServer)
+                        .setNegativeButton("CANCEL", null);
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        focuScale  = Integer.parseInt(inputServer.getText().toString());
+                    }
+                });
+                builder.show();
+                setfocuScale(focuScale);
+
+                break;
+            default:
+                break;
+        }
+        return false;
     }
 
     class MyThread extends Thread {
@@ -221,20 +259,17 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        //getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_CODE) {
             if (resultCode == FileView.RESULT_CODE) {
                 Bundle bundle = data.getExtras();
                 bmpFile = bundle.getString("filename");
                 //Toast.makeText(MainActivity.this, bmpFile, Toast.LENGTH_LONG).show();
-                ((TextView) findViewById(R.id.showFilepath)).setText(bmpFile);
+
+                //toolbar.setTitle(bmpFile);//设置主标题
+                //toolbar.setT
+                //oolbar.setSubtitle("show file path");
+                ((TextView) findViewById(R.id.toolbar_title)).setText(bmpFile);
             }
         }
     }
@@ -259,12 +294,18 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     }
 
     private void fullHere(int x, int y) {
+        DisplayMetrics dm = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(dm);
+        int screenWidth = dm.widthPixels;                //水平分辨率
+        int screenHeight = dm.heightPixels;              //垂直分辨率
+        float d0 = dm.density;
         isExit = false;
         int newScale = (focuScale << 1) + 1;
         float scaleWidth = canvsWidth / newScale;
         float scaleHeight = canvsWidth / newScale;
         int px = x - left - location[0]; //获取相对于图片左上点的x
         int py = y - top - location[1];  //获取相对于图片左上点的y
+        int d1 =  bm.getDensity();
         int pixelxy = bm.getPixel(px, py);
         //Toast.makeText(getApplicationContext(), "RGB:" + Integer.toHexString(pixelxy),  Toast.LENGTH_SHORT).show();
         int cx = px - focuScale;
@@ -280,6 +321,9 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         // 新得到的图片是原图片经过变换填充到整个屏幕的图片
         try {
             Bitmap picNewRes = Bitmap.createBitmap(bm, cx, cy, newScale, newScale, matrix, true);
+            int d2 = picNewRes.getDensity();
+            picNewRes.setDensity((int)(d1/scaleWidth));
+            int d3 = picNewRes.getDensity();
             drawBmp(holder, picNewRes);
         } catch (Exception e) {
             Log.e(TAG, "fullHere: createBitmap error" + e.toString());
@@ -299,7 +343,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
 
     @Override
     public synchronized void onBackPressed() {
-        if (bm != null) {
+        if (bm != null && startX != -1) {
             cleanScreen();
             drawBmp(holder,bm);
             startX = startY = -1;
@@ -362,6 +406,15 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         canvas.drawPaint(paint);
         paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC));
         holder.unlockCanvasAndPost(canvas);
+    }
+
+    public class AboutDialog extends AlertDialog {
+        public AboutDialog(Context context) {
+            super(context);
+            final View view = getLayoutInflater().inflate(R.layout.about,null);
+            setTitle("Imaginer   v1.0.0" );
+            setView(view);
+        }
     }
 }
 

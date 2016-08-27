@@ -1,62 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/activity_main"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.skybosi.imaginer.MainActivity">
+    android:orientation="vertical"
+    android:weightSum="1">
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.08"
+        android:background="?attr/colorPrimary"
+        android:popupTheme="@style/AppTheme">
+        <TextView
+            android:id="@+id/toolbar_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="marquee"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:scrollHorizontally="true"
+            android:singleLine="true"
+            android:textSize="@dimen/abc_text_size_title_material_toolbar" />
+    </android.support.v7.widget.Toolbar>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.92"
         android:orientation="vertical"
         android:weightSum="1">
-        <TextView
-            android:id="@+id/showFilepath"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:gravity="center"
-            android:text="show picture path here"
-            android:layout_weight="0.03"/>
+
         <SurfaceView
             android:id="@+id/surface"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="0.9" />
+            android:layout_weight="0.9"/>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:orientation="horizontal"
             android:layout_gravity="bottom"
+            android:layout_weight="0.1"
             android:gravity="center"
-            android:layout_weight="0.07"
+            android:orientation="horizontal"
             android:weightSum="1">
-            <!--<EditText-->
-                <!--android:id="@+id/nextStep"-->
-                <!--android:layout_width="0dp"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:layout_margin="5dp"-->
-                <!--android:gravity="center"-->
-                <!--android:hint="1"-->
-                <!--android:layout_weight="0.45"/>-->
+
             <Button
                 android:id="@+id/nextPoint"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="next"
-                android:layout_weight="0.45"/>
+                android:layout_weight="0.45"
+                android:text="next" />
+
             <ImageButton
                 android:id="@+id/openSD"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:background="@drawable/openfile"
                 android:layout_margin="5dp"
-                android:layout_weight="0.1">
-            </ImageButton>
+                android:layout_weight="0.1"
+                android:background="@drawable/openfile"></ImageButton>
         </LinearLayout>
-
     </LinearLayout>
 
-
-</android.support.constraint.ConstraintLayout>
+</LinearLayout>

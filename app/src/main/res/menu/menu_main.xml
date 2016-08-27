@@ -1,15 +1,22 @@
-<?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/pcm2amr" android:title="pcm to amr" />
-    <item android:id="@+id/amr2silk" android:title="amr to silk" />
-    <item android:id="@+id/silk2amr" android:title="slik to amr" />
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".MainActivity">
+    <item android:id="@+id/settings"
+        android:orderInCategory="100"
+        android:title="@string/app_settings"
+        app:showAsAction="never">
+        <menu>
+            <item android:id="@+id/setFoucs"
+                android:title="set foucs Range"/>
+            <item android:id="@+id/other"
+                android:title="other"/>
+            <!-- 别的菜单项 -->
+        </menu>
+    </item>
+    <item
+        android:id="@+id/about"
+        android:orderInCategory="100"
+        android:title="@string/app_about"
+        app:showAsAction="never" />
 </menu>
-
-    <!--
-    <menu xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        xmlns:tools="http://schemas.android.com/tools" tools:context=".MainActivity">
-        <item android:id="@+id/action_settings" android:title="@string/action_settings"
-            android:orderInCategory="100" app:showAsAction="never" />
-    </menu>
-    -->

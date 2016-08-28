@@ -9,6 +9,8 @@
         <menu>
             <item android:id="@+id/setFoucs"
                 android:title="set foucs Range"/>
+            <item android:id="@+id/nextSpeed"
+                android:title="set next Speed"/>
             <item android:id="@+id/other"
                 android:title="other"/>
             <!-- 别的菜单项 -->

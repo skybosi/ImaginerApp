@@ -50,6 +50,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private Bitmap bm = null;
     //private Canvas canvas = null;
     private int focuScale = 4;//foucs scale
+    private int nextSpeeds = 200;//ms
     private String TAG = "Imaginer";
     private static boolean isExit = false;
     private SurfaceHolder holder = null;
@@ -60,6 +61,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private int tmpSteps = 1;
     private int startX = -1;
     private int startY = -1;
+    private boolean isNewStart = false;
     private boolean isBack = false;
     private int[] location = new int[2];
     private SurfaceView sfv = null;
@@ -71,7 +73,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         sfv.getLocationOnScreen(location);
-        sfv.getLocationInWindow(location);
+        //sfv.getLocationInWindow(location);
     }
 
     @Override
@@ -80,6 +82,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         setContentView(R.layout.activity_main);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.inflateMenu(R.menu.menu_main);//设置右上角的填充菜单
+        toolbar.setLogo(R.mipmap.imaginer);
         toolbar.setOnMenuItemClickListener(this);
         sfv = (SurfaceView) findViewById(R.id.surface);
         ImageButton ib = (ImageButton) findViewById(R.id.openSD);
@@ -98,6 +101,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                     case 1:
                         Toast.makeText(MainActivity.this, "This getBoundray loop is Finish", Toast.LENGTH_SHORT).show();
                         break;
+                    case 2:
+                        isExit = false;
                     default:
                         break;
                 }
@@ -211,12 +216,35 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                         .setNegativeButton("CANCEL", null);
                 builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        focuScale = Integer.parseInt(inputServer.getText().toString());
+                        try {
+                            focuScale = Integer.parseInt(inputServer.getText().toString());
+                        } catch (Exception e) {
+                            Toast.makeText(MainActivity.this, "Sorry;Yours Input type is Error,please try again!", Toast.LENGTH_SHORT).show();
+                            Log.e(TAG, "onClick:input type error");
+                        }
                     }
                 });
                 builder.show();
                 setfocuScale(focuScale);
-
+                break;
+            case R.id.nextSpeed:
+                final EditText nextSpeedServer = new EditText(this);
+                AlertDialog.Builder nextSpeedbuilder = new AlertDialog.Builder(this);
+                nextSpeedbuilder.setTitle("You Can set next speed(ms)").setIcon(android.R.drawable.ic_dialog_info).setView(nextSpeedServer)
+                        .setNegativeButton("CANCEL", null);
+                nextSpeedbuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        try {
+                            nextSpeeds = Integer.parseInt(nextSpeedServer.getText().toString());
+                        } catch (Exception e) {
+                            Toast.makeText(MainActivity.this, "Sorry;Yours Input type is Error,please try again!", Toast.LENGTH_SHORT).show();
+                            Log.e(TAG, "onClick:input type error");
+                        }
+                    }
+                });
+                nextSpeedbuilder.show();
+//                inputDialog("You Can set next speed",nextSpeeds);
+                setNextSpeed(nextSpeeds);
                 break;
             default:
                 break;
@@ -239,18 +267,29 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             init_bmp();
             int ranLeft = -1;
             int ranTop = -1;
+            Bitmap newBmp;
             while (refresh) {
                 if (nextSteps-- > 0 && startX > 0 && startY > 0) {
-                    if (isBack || ranLeft < 0 && ranTop < 0) {
+                    if (isNewStart || ranLeft < 0 && ranTop < 0) {
                         ranLeft = startX;
                         ranTop = startY;
+                        isNewStart = false;
                         isBack = false;
+                        isExit = false;
                     }
                     ranLeft += random.nextInt(2);
                     ranTop += random.nextInt(2);
                     //can not out of picture
                     if (inPicture(ranLeft, ranTop)) {
-                        fullHere(ranLeft, ranTop);
+                        if (currFoucStatus) {//draw on the foucs picture
+                            newBmp = fullHere(ranLeft, ranTop);
+                            if (newBmp != null) {
+                                drawBmp(holder, newBmp);
+                            }
+                        } else {//draw on the src picture
+                            newBmp = getNext(ranLeft, ranTop);
+                            drawBmp(holder, newBmp);
+                        }
                     } else {
                         mHandler.sendEmptyMessage(1);
                         nextSteps = 0;
@@ -259,7 +298,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                     }
                 }
                 try {
-                    Thread.sleep(200);
+                    Thread.sleep(nextSpeeds);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -302,7 +341,12 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                     if (inPicture(touchX, touchY)) {
                         startX = (int) touchX;
                         startY = (int) touchY;
-                        fullHere(startX, startY);
+                        isNewStart = true;
+                        isExit = false;
+                        nextSteps = 0;
+                        Bitmap fullBmp = fullHere(startX, startY);
+                        if (fullBmp != null)
+                            drawBmp(holder, fullBmp);
                         Toast.makeText(MainActivity.this, "X:" + touchX + " Y:" + touchY, Toast.LENGTH_SHORT).show();
                     } else {
                         Toast.makeText(MainActivity.this, "onTouchEvent: Out oyf picture", Toast.LENGTH_SHORT).show();
@@ -316,31 +360,45 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         return super.onTouchEvent(event);
     }
 
-    private void fullHere(int x, int y) {
+    private Bitmap getNext(int x, int y) {
+        int px = x - left - location[0]; //获取相对于图片左上点的x
+        int py = y - top - location[1];  //获取相对于图片左上点的y
+        int pixelxy = bm.getPixel(px, py);
+        bm.setPixel(px, py, resetColor);
+        return bm;
+    }
+
+    private Bitmap fullHere(int x, int y) {
+        isBack = false;
         int newScale = (focuScale << 1) + 1;
         float scaleWidth = canvsWidth / newScale;
         float scaleHeight = canvsWidth / newScale;
         int px = x - left - location[0]; //获取相对于图片左上点的x
         int py = y - top - location[1];  //获取相对于图片左上点的y
-        int d1 = bm.getDensity();
         int pixelxy = bm.getPixel(px, py);
         //Toast.makeText(getApplicationContext(), "RGB:" + Integer.toHexString(pixelxy),  Toast.LENGTH_SHORT).show();
         int cx = px - focuScale;
         int cy = py - focuScale;
-        if (cx < 0) { cx = 0; }
-        if (cy < 0) { cy = 0; }
+        if (cx < 0) {
+            cx = 0;
+        }
+        if (cy < 0) {
+            cy = 0;
+        }
         bm.setPixel(px, py, resetColor);
         Log.i(TAG, "fullHere: createBitmap error" + pixelxy);
         Matrix matrix = new Matrix();
         // 缩放图片动作
         //matrix.setScale(scaleWidth,scaleHeight);
         matrix.postScale(scaleWidth, scaleHeight);
+        Bitmap picNewRes = null;
         // 新得到的图片是原图片经过变换填充到整个屏幕的图片
         try {
-            Bitmap picNewRes = Bitmap.createBitmap(bm, cx, cy, newScale, newScale, matrix, true);
-            drawBmp(holder, picNewRes);
+            picNewRes = Bitmap.createBitmap(bm, cx, cy, newScale, newScale, matrix, true);
         } catch (Exception e) {
             Log.e(TAG, "fullHere: createBitmap error" + e.toString());
+        } finally {
+            return picNewRes;
         }
     }
 
@@ -348,19 +406,22 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         focuScale = focuscale;
     }
 
+    public synchronized void setNextSpeed(int nextSpeed) {
+        nextSpeeds = nextSpeed;
+    }
+
     private boolean inPicture(float x, float y) {
-        if (x > left && x < left + bmpWidth &&
-                y > top && y < top + bmpHight)
+        if (x > left+location[0] && x < left + bmpWidth + location[0] &&
+                y > top + location[1] && y < top + bmpHight + location[1])
             return true;
         return false;
     }
 
     @Override
     public synchronized void onBackPressed() {
-        if (bm != null && startX != -1) {
+        if (!isBack && bm != null && startX != -1) {
             cleanScreen();
             drawBmp(holder, bm);
-            startX = startY = -1;
             isBack = true;
         } else {
             exit();
@@ -371,6 +432,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         if (!isExit) {
             isExit = true;
             Toast.makeText(getApplicationContext(), "再按一次后退键退出主程序！", Toast.LENGTH_SHORT).show();
+            // 利用handler延迟发送更改状态信息
+            mHandler.sendEmptyMessageDelayed(2, 2000);
         } else {
             if (thread != null)
                 thread.mystop();
@@ -402,7 +465,6 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 top = 0;
             canvas.drawBitmap(bm, left, top, paint);
         } else {
-            isExit = false;
             currFoucStatus = true;
             int picWidth = bmp.getWidth();
             int picHight = bmp.getHeight();
@@ -434,6 +496,20 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             setView(view);
         }
     }
+
+//    private  void inputDialog(String Tilte,final int returnValue)
+//    {
+//        final EditText inputServer = new EditText(this);
+//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//        builder.setTitle(Tilte).setIcon(android.R.drawable.ic_dialog_info).setView(inputServer)
+//                .setNegativeButton("CANCEL", null);
+//       builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+//           public void onClick(DialogInterface dialog, int which) {
+//               returnValue = Integer.parseInt(inputServer.getText().toString());
+//           }
+//       });
+//       builder.show();
+//    }
 }
 
 

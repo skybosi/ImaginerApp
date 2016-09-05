@@ -1,5 +1,6 @@
 package com.skybosi.imaginer;
 
+import android.ImgSdk.Pixels;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -15,10 +16,7 @@ import android.graphics.PorterDuffXfermode;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.Toolbar.OnMenuItemClickListener;
-import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.ContextMenu;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -31,7 +29,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.os.Handler;
 import android.os.Message;
-import android.view.WindowManager;
 
 import java.util.Random;
 
@@ -67,6 +64,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private SurfaceView sfv = null;
     private Toolbar toolbar = null;
     private boolean currFoucStatus = false;//false:is src picture;true:is foucs picture
+    private int returnValue = -1;
 
     //get surfaceview's location for the location on the picture 
     @Override
@@ -183,6 +181,13 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 }
             });
             builder.show();
+            //inputDialog("Next Step Set");
+            tmpSteps = returnValue;
+            if (tmpSteps > 0) {
+                ((Button) findViewById(R.id.nextPoint)).setText("NEXT" + "(" + returnValue + ")");
+            } else {
+                ((Button) findViewById(R.id.nextPoint)).setText("NEXT");
+            }
         }
         return false;
     }
@@ -197,8 +202,27 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 mHandler.sendEmptyMessage(0);
             }
         } else {
+            recodeBmp(bm);
             drawBmp(holder, bm);
             currFoucStatus = false;
+        }
+    }
+
+    private void recodeBmp(Bitmap bm) {
+        if(bm != null)
+        {
+            int W = bm.getWidth();
+            int H = bm.getHeight();
+            int x = 0,y = 0;
+            int pixel = 0;
+            Pixels pixels = null;
+            for(;x < W--;++x)
+            {
+                for(;y < H--;++y){
+                    pixel = bm.getPixel(x,y);
+                    pixels =  new Pixels(x,y,pixel);
+                }
+            }
         }
     }
 
@@ -210,6 +234,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 new AboutDialog(this).show();
                 break;
             case R.id.setFoucs:
+                //inputDialog("You Can set foucs Range");
+                focuScale = returnValue;
                 final EditText inputServer = new EditText(this);
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("You Can set foucs Range").setIcon(android.R.drawable.ic_dialog_info).setView(inputServer)
@@ -228,6 +254,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 setfocuScale(focuScale);
                 break;
             case R.id.nextSpeed:
+                //inputDialog("You Can set next speed(ms)");
+                focuScale = returnValue;
                 final EditText nextSpeedServer = new EditText(this);
                 AlertDialog.Builder nextSpeedbuilder = new AlertDialog.Builder(this);
                 nextSpeedbuilder.setTitle("You Can set next speed(ms)").setIcon(android.R.drawable.ic_dialog_info).setView(nextSpeedServer)
@@ -243,7 +271,6 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                     }
                 });
                 nextSpeedbuilder.show();
-//                inputDialog("You Can set next speed",nextSpeeds);
                 setNextSpeed(nextSpeeds);
                 break;
             default:
@@ -364,6 +391,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         int px = x - left - location[0]; //获取相对于图片左上点的x
         int py = y - top - location[1];  //获取相对于图片左上点的y
         int pixelxy = bm.getPixel(px, py);
+        Pixels pixels = new Pixels(px,py,pixelxy);
         bm.setPixel(px, py, resetColor);
         return bm;
     }
@@ -376,6 +404,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         int px = x - left - location[0]; //获取相对于图片左上点的x
         int py = y - top - location[1];  //获取相对于图片左上点的y
         int pixelxy = bm.getPixel(px, py);
+        Pixels pixels = new Pixels(px,py,pixelxy);
         //Toast.makeText(getApplicationContext(), "RGB:" + Integer.toHexString(pixelxy),  Toast.LENGTH_SHORT).show();
         int cx = px - focuScale;
         int cy = py - focuScale;
@@ -496,20 +525,22 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             setView(view);
         }
     }
-
-//    private  void inputDialog(String Tilte,final int returnValue)
-//    {
-//        final EditText inputServer = new EditText(this);
-//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-//        builder.setTitle(Tilte).setIcon(android.R.drawable.ic_dialog_info).setView(inputServer)
-//                .setNegativeButton("CANCEL", null);
-//       builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-//           public void onClick(DialogInterface dialog, int which) {
-//               returnValue = Integer.parseInt(inputServer.getText().toString());
-//           }
-//       });
-//       builder.show();
-//    }
+    /*
+    private synchronized void inputDialog(String Tilte)
+    {
+        Message msg = null;
+        final EditText inputServer = new EditText(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(Tilte).setIcon(android.R.drawable.ic_dialog_info).setView(inputServer)
+                .setNegativeButton("CANCEL", null);
+       builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+           public void onClick(DialogInterface dialog, int which) {
+               returnValue = Integer.parseInt(inputServer.getText().toString());
+           }
+       });
+       builder.show();
+    }
+    */
 }
 
 

@@ -1,5 +1,6 @@
 package com.skybosi.imaginer;
 
+import android.ImgSdk.Imaginer;
 import android.ImgSdk.Pixels;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -65,7 +66,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private Toolbar toolbar = null;
     private boolean currFoucStatus = false;//false:is src picture;true:is foucs picture
     private int returnValue = -1;
-
+    private Imaginer imaginer = null;
     //get surfaceview's location for the location on the picture 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
@@ -211,19 +212,23 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private void recodeBmp(Bitmap bm) {
         if(bm != null)
         {
+            imaginer = new Imaginer(bm);
             int W = bm.getWidth();
             int H = bm.getHeight();
             int x = 0,y = 0;
             int pixel = 0;
             Pixels pixels = null;
-            for(;x < W--;++x)
+            for(x = 0;x < W;++x)
             {
-                for(;y < H--;++y){
+                for(y = 0;y < H;++y){
                     pixel = bm.getPixel(x,y);
-                    pixels =  new Pixels(x,y,pixel);
+                    imaginer.addCimgaData(pixel);
+                    imaginer.setImageData(pixel,x,y);
                 }
             }
         }
+        imaginer.init();
+        System.out.print("recode bitmap finish\n");
     }
 
     @Override

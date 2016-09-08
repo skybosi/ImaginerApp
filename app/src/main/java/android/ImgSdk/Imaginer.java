@@ -1,50 +1,67 @@
 package android.ImgSdk;
 
+import android.graphics.Bitmap;
+
 /**
  * Created by dejian.fei on 2016/8/30.
  */
 
 public final class Imaginer {
-    static
-    {
-        System.loadLibrary("imginer");//load libimaginer.so
+    static {
+        System.loadLibrary("Imaginer");//load libimaginer.so
     }
 
-    private int mNativePerson;
+    Bitmap bitmap;
+    private int bmpWidth;
+    private int bmpHeight;
+    private int[] cimageData;
+    private Pixels[][] imageData;
+    private int currPostion;
 
-    public Imaginer()
+    public boolean init()
     {
-        mNativePerson = init();
+        return init(cimageData,bmpWidth,bmpHeight);
     }
-    protected void finalize()
+    public synchronized void addCimgaData(int pixels)
     {
-        try {
-            finalizer(mNativePerson);
-        } finally {
-            try {
-                super.finalize();
-            } catch (Throwable e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
+        cimageData[ currPostion++] = pixels;
     }
-    public int getAge()
+    public Imaginer(Bitmap bitmap) {
+        this.currPostion = 0;
+        this.bitmap = bitmap;
+        this.bmpWidth = bitmap.getWidth();
+        this.bmpHeight = bitmap.getHeight();
+        this.imageData = new Pixels[bmpWidth][bmpHeight];
+        this.cimageData = new int[bmpWidth*bmpHeight];
+    }
+    public void finalize()
     {
-        return native_getAge(mNativePerson);
+        cfinalize();
     }
 
-    public void setAge(int age)
-    {
-        native_setAge(mNativePerson, age);
+    public void setImageData(Pixels pixels, int x, int y) {
+        imageData[x][y] = pixels;
     }
 
+    public void setImageData(int intpixel, int x, int y) {
+        imageData[x][y] = new Pixels(x, y, intpixel);
+    }
 
-    private native void finalizer(int nPerson);
-    public 	native int	add(int a, int b);
-    public	native int  sub(int a, int b);
-    private native int  init();
+    public void show(int x, int y) {
+        System.out.println("x = " + x + " y = " + y);
+        System.out.println("R: " + imageData[x][y].getR());
+        System.out.println("G: " + imageData[x][y].getG());
+        System.out.println("B: " + imageData[x][y].getB());
+        System.out.println("A: " + imageData[x][y].getA());
+    }
 
-    private native int   native_getAge(int nPerson);
-    private native void  native_setAge(int nPerson, int age);
+    public native boolean init(int[] bmpData,int width,int height);
+
+    public native boolean isStartPoint();
+
+    public native boolean getNextPoint();
+
+    private native float getSimilarity();
+
+    private native void  cfinalize();
 }

@@ -28,6 +28,7 @@ public class Pixels {
     private int pixel;
     private int bEdge;
     private Position pos;
+
     public Pixels(int x, int y, int pixel) {
         this.x = x;
         this.y = y;

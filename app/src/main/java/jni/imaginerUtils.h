@@ -8,6 +8,13 @@
 #include <map>
 #include <vector>
 #include <deque>
+#include <android/log.h>
+
+#define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, "IMAGINER", __VA_ARGS__) 
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG  , "IMAGINER", __VA_ARGS__)
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO   , "IMAGINER", __VA_ARGS__)
+#define LOGW(...) __android_log_print(ANDROID_LOG_WARN   , "IMAGINER", __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR  , "IMAGINER", __VA_ARGS__)
 
 #define OUTRANGE(P) ((P > 255) || (P < 0))
 #define PI 3.14159

@@ -18,78 +18,116 @@ void pixel2rgba(int pixel,int x ,int y,PIXELS& cpixel)
 	int G = (pixel & 0x0000FF00) >> 8;
 	int B = (pixel & 0x000000FF);
 	cpixel.setRGB(R,G,B,A);
+	cpixel.setXY(x,y);
 	int tmp = rgba2pixel(R,G,B,A);
 	printf("rgba: %d\n",tmp);
 }
 
-void CImaginer::showPIXELS(PIXELS& cpixel)
-{
-	cpixel.show_PIXELS();
-}
 CImaginer* 	cimageObj = NULL;
 ppPIXELS    cimageData = NULL;
+int startX = 0;
+int startY = 0;
+Position nextPos = Right;
 
 JNIEXPORT jboolean JNICALL Java_android_ImgSdk_Imaginer_init(JNIEnv * env, jobject obj, jintArray imageData, jint width, jint height)
 {
+	LOGD("imageData lenth:%d\tWidth:%d\t Height:%d\n",env->GetArrayLength(imageData), width,height);
 	cimageObj = new CImaginer(width,height);
 	PIXELS cpixel;
 	jint *cbuf = (env)->GetIntArrayElements(imageData,false);
 	if (cbuf == NULL) {
+		LOGE("GetIntArrayElements in imageData error\n");
 		return false; /* exception occurred */
 	}
-	for (int x = 0; x < width; x++) 
+	for(int y = 0;y < height;++y)
 	{
-		for (int y = 0; y < height; y++) 
+		for(int x = 0;x < width;++x)
 		{
-			int tmp = cbuf[ x * height + y];
+			int tmp = cbuf[ y * width + x];
 			pixel2rgba(tmp,x,y,cpixel);
 			cimageObj->insert(cpixel);
 			cimageObj->showPIXELS(cpixel);
+			//if(x == 15)
+			//goto here;
 		}
 	}
+	//here: LOGD("get 1 hang\n");
 	cimageData = cimageObj->getImageData();
 	return true;
 }
 
-JNIEXPORT jboolean JNICALL Java_android_ImgSdk_Imaginer_isStartPoint(JNIEnv *, jobject)
+JNIEXPORT jintArray JNICALL Java_android_ImgSdk_Imaginer_isStartPoint (JNIEnv *env, jobject obj, jint curx, jint cury)
 {
 	PIXELS tmp;
-	int bmpHeight = cimageObj->getWidth();
-	int bmpWidth = cimageObj->getHeight();
-	for (int y = 0;y < bmpHeight; y++)
+	int buffer[2];//save start point x,y 
+	jintArray iarray = NULL;
+	int bmpHeight = cimageObj->getHeight();
+	int bmpWidth = cimageObj->getWidth();
+	LOGD("bmpWidth:%d\t bmpHeight:%d\tcurX:%d\tcurY:%d\n",bmpWidth,bmpHeight,curx,cury);
+	for (int y = cury;y < bmpHeight; ++y)
 	{
-		for (int x = 0; x < bmpWidth; x++)
+		for (int x = curx; x < bmpWidth; ++x)
 		{
 			if(cimageObj->getNextStartPoint(x,y))
 			{
-				tmp = cimageData[y][x];
+				LOGD("Get startX:%d\t startY:%d will see Edge flags\n",x,y);
+				tmp = cimageData[x][y];
 				if(tmp.getEdge() >= 0)
 				{
-					if(!cimageObj->getBoundaryLine(x,y))
+					LOGD("oookkk!!! Get startX:%d\t startY:%d\n",x,y);
+					buffer[0] = x;
+					startX = x;
+					buffer[1] = y;
+					startY = y;
+					iarray = (env)->NewIntArray(2);
+					(env)->SetIntArrayRegion(iarray,0,2,buffer);
+					goto START;
+					//break;
+					/*
+					if(cimageObj->getBoundaryLine(x,y))
 					{
+					}
+					else
+					{
+						LOGD("getBoundaryLine flase\n");
 						//printf("getBoundaryLine flase\n");
 					}
+					*/
 				}
 				else
 				{
+					LOGD("Edge flags:%d\n",tmp.getEdge());
 					//genSkipTable(cimageData[y][x]);
 				}
 			}
 		}
 	}
-	return true;
+	START: LOGD("get 1 hang\n");
+	return iarray;
 }
 
-JNIEXPORT jboolean JNICALL Java_android_ImgSdk_Imaginer_getNextPoint (JNIEnv *, jobject)
+JNIEXPORT jintArray JNICALL Java_android_ImgSdk_Imaginer_getNextPoint(JNIEnv *env, jobject obj, jint curX, jint curY)
 {
-	return true;
+	int buffer[3];//save next point x,y and flags 
+	jintArray iarray = NULL;
+	//get next point
+	PIXELS pixels = cimageData[curX][curY];
+	Position pos = nextPos;
+	LOGD("before cutX:%d\t cutY:%d\tPostion:%d\n",curX,curY,pos);
+	if(cimageObj->getRpoint(pos,curX,curY))
+	{
+		LOGD("After cutX:%d\t cutY:%d\tPostion:%d\n",curX,curY,pos);
+		buffer[0] = curX;
+		buffer[1] = curY;
+		buffer[2] = pos;
+		nextPos = pos;
+		iarray = (env)->NewIntArray(3);
+		(env)->SetIntArrayRegion(iarray,0,3,buffer);
+	}
+	return iarray;
 }
 
 
-JNIEXPORT jfloat JNICALL Java_android_ImgSdk_Imaginer_getSimilarity (JNIEnv *, jobject)
-{
-	return 0.0;
-}
 JNIEXPORT void JNICALL Java_android_ImgSdk_Imaginer_cfinalize (JNIEnv *, jobject)
 {
 //will be use free all memory at c	

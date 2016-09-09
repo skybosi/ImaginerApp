@@ -53,6 +53,7 @@ class PIXELS
 		int getEdge()const;
 		RGBQUAD getRGB()const;
 		pix_p getpPos();
+		Position getpPositon();
 		//change direction or not
 		bool  getpPosStatus();
 		int   getpPosValues();

@@ -7,7 +7,7 @@ LOCAL_MODULE    := libImaginer
 #指定平台
 #LOCAL_ARM_MODE := arm
 #需要引用的库
-LOCAL_LDFLAGS  := -fPIC  -shared  -Wl -ldl 
+LOCAL_LDFLAGS  := -fPIC  -shared  -Wl -ldl -llog
 #LOCAL_LDLIBS    := -lm -llog -ljnigraphics
 LOCAL_CPPFLAGS += -fexceptions
 #-L$(SYSROOT)/usr/lib -lrt -luuid -pthread

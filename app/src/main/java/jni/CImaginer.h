@@ -33,6 +33,10 @@ class CImaginer
 		int      getHeight(){return cheight;}
 		bool     getNextStartPoint(int& x,int& y){ return isBoundaryPoint(x,y);}
 		bool     getBoundaryLine(int& x,int& y);
+		//just want to get the right point of one point,if get x,y will be reset
+		bool     getRpoint(Position& direction,int& x,int& y);
+		//just want to get the left point of one point,if get x,y will be reset
+		bool     getLpoint(Position& direction,int& x,int& y);
 	private:
 		ppPIXELS newImageData(ppPIXELS &imageData, int W, int H);
 		bool     delImageData(ppPIXELS& imageData, int H);
@@ -50,10 +54,6 @@ class CImaginer
 		//set BackGround with PIXELS
 		bool     setBackground(const PIXELS& pixel);
 		int      trackDown(PIXELS& startPoint);
-		//just want to get the right point of one point,if get x,y will be reset
-		bool     getRpoint(Position& direction,int& x,int& y);
-		//just want to get the left point of one point,if get x,y will be reset
-		bool     getLpoint(Position& direction,int& x,int& y);
 		//alike background or not,Mean and the same color as 
 		//the background color 
 		//NOTE: But not necessarily background 

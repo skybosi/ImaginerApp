@@ -205,7 +205,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         } else {
             recodeBmp(bm);
             drawBmp(holder, bm);
-            currFoucStatus = false;
+            currFoucStatus = true;
         }
     }
 
@@ -218,12 +218,11 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             int x = 0,y = 0;
             int pixel = 0;
             Pixels pixels = null;
-            for(x = 0;x < W;++x)
-            {
-                for(y = 0;y < H;++y){
-                    pixel = bm.getPixel(x,y);
+            for (y = 0; y < H; ++y) {
+                for (x = 0; x < W; ++x) {
+                    pixel = bm.getPixel(x, y);
                     imaginer.addCimgaData(pixel);
-                    imaginer.setImageData(pixel,x,y);
+                    imaginer.setImageData(pixel, x, y);
                 }
             }
         }
@@ -300,6 +299,10 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             int ranLeft = -1;
             int ranTop = -1;
             Bitmap newBmp;
+            int[] newPoint = null;
+            imaginer.getStartPoint(0,0);
+            startX = imaginer.getStartX();
+            startY = imaginer.getStartY();
             while (refresh) {
                 if (nextSteps-- > 0 && startX > 0 && startY > 0) {
                     if (isNewStart || ranLeft < 0 && ranTop < 0) {
@@ -309,8 +312,26 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                         isBack = false;
                         isExit = false;
                     }
+                    newPoint = imaginer.gotoNextPoint(ranLeft, ranTop);
+                    ranLeft = newPoint[0];
+                    ranTop = newPoint[1];
+                    /*
+                    newBmp = fullHere(ranLeft, ranTop);
+                    if (newBmp != null) {
+                        drawBmp(holder, newBmp);
+                    }*/
+                    if (currFoucStatus) {//draw on the foucs picture
+                        newBmp = fullHere(ranLeft, ranTop);
+                        if (newBmp != null) {
+                            drawBmp(holder, newBmp);
+                        }
+                    } else {//draw on the src picture
+                        newBmp = getNext(ranLeft, ranTop);
+                        drawBmp(holder, newBmp);
+                    }
+                    /*
                     ranLeft += random.nextInt(2);
-                    ranTop += random.nextInt(2);
+                     ranTop += random.nextInt(2);
                     //can not out of picture
                     if (inPicture(ranLeft, ranTop)) {
                         if (currFoucStatus) {//draw on the foucs picture
@@ -327,7 +348,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                         nextSteps = 0;
                         ranLeft = -1;
                         ranTop = -1;
-                    }
+                    }*/
                 }
                 try {
                     Thread.sleep(nextSpeeds);
@@ -393,10 +414,14 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     }
 
     private Bitmap getNext(int x, int y) {
+        int px = x; //来自真实图片的x，不需要矫正
+        int py = y; //来自真实图片的y，不需要矫正
+        /*
         int px = x - left - location[0]; //获取相对于图片左上点的x
         int py = y - top - location[1];  //获取相对于图片左上点的y
         int pixelxy = bm.getPixel(px, py);
         Pixels pixels = new Pixels(px,py,pixelxy);
+        */
         bm.setPixel(px, py, resetColor);
         return bm;
     }
@@ -406,11 +431,15 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         int newScale = (focuScale << 1) + 1;
         float scaleWidth = canvsWidth / newScale;
         float scaleHeight = canvsWidth / newScale;
+        int px = x; //来自真实图片的x，不需要矫正
+        int py = y; //来自真实图片的y，不需要矫正
+        /*
         int px = x - left - location[0]; //获取相对于图片左上点的x
         int py = y - top - location[1];  //获取相对于图片左上点的y
         int pixelxy = bm.getPixel(px, py);
         Pixels pixels = new Pixels(px,py,pixelxy);
         //Toast.makeText(getApplicationContext(), "RGB:" + Integer.toHexString(pixelxy),  Toast.LENGTH_SHORT).show();
+        */
         int cx = px - focuScale;
         int cy = py - focuScale;
         if (cx < 0) {
@@ -420,7 +449,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             cy = 0;
         }
         bm.setPixel(px, py, resetColor);
-        Log.i(TAG, "fullHere: createBitmap error" + pixelxy);
+        //Log.i(TAG, "fullHere: createBitmap error" + pixelxy);
         Matrix matrix = new Matrix();
         // 缩放图片动作
         //matrix.setScale(scaleWidth,scaleHeight);

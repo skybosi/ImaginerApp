@@ -18,26 +18,18 @@ JNIEXPORT jboolean JNICALL Java_android_ImgSdk_Imaginer_init
 /*
  * Class:     android_ImgSdk_Imaginer
  * Method:    isStartPoint
- * Signature: ()Z
+ * Signature: (II)[I
  */
-JNIEXPORT jboolean JNICALL Java_android_ImgSdk_Imaginer_isStartPoint
-  (JNIEnv *, jobject);
+JNIEXPORT jintArray JNICALL Java_android_ImgSdk_Imaginer_isStartPoint
+  (JNIEnv *, jobject, jint, jint);
 
 /*
  * Class:     android_ImgSdk_Imaginer
  * Method:    getNextPoint
- * Signature: ()Z
+ * Signature: (II)[I
  */
-JNIEXPORT jboolean JNICALL Java_android_ImgSdk_Imaginer_getNextPoint
-  (JNIEnv *, jobject);
-
-/*
- * Class:     android_ImgSdk_Imaginer
- * Method:    getSimilarity
- * Signature: ()F
- */
-JNIEXPORT jfloat JNICALL Java_android_ImgSdk_Imaginer_getSimilarity
-  (JNIEnv *, jobject);
+JNIEXPORT jintArray JNICALL Java_android_ImgSdk_Imaginer_getNextPoint
+  (JNIEnv *, jobject, jint, jint);
 
 /*
  * Class:     android_ImgSdk_Imaginer

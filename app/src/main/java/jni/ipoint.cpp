@@ -394,6 +394,10 @@ PIXELS::pix_p PIXELS::getpPos()
 {
 	return pix_P;
 }
+Position PIXELS::getpPositon()
+{
+	return pix_P.first;
+}
 bool PIXELS::getpPosStatus()
 {
 	return pix_P.second & 0x80;

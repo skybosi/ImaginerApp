@@ -313,7 +313,11 @@ public class FileView extends Activity{
                         }
                     }
                     else {
-                        FileNum.setText(new File(currentPath).getParentFile().listFiles().length + " 项    ");
+                        try {
+                            int len = new File(currentPath).getParentFile().listFiles().length;
+                            FileNum.setText(len + " 项    ");
+                        }catch(Exception e) {
+                        }
                     }
                 }
             }else

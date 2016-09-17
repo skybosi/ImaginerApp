@@ -49,7 +49,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     //private Canvas canvas = null;
     private int focuScale = 4;//foucs scale
     private int nextSpeeds = 200;//ms
-    private String TAG = "Imaginer";
+    private String TAG = "IMAGINER";
     private static boolean isExit = false;
     private SurfaceHolder holder = null;
     private int resetColor = Color.RED;
@@ -67,7 +67,10 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private boolean currFoucStatus = false;//false:is src picture;true:is foucs picture
     private int returnValue = -1;
     private Imaginer imaginer = null;
-    //get surfaceview's location for the location on the picture 
+    private int currX = -1;
+    private int currY = -1;
+
+    //get surfaceview's location for the location on the picture
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
@@ -195,6 +198,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
 
     //init the picture that will be deal with
     private void init_bmp() {
+        if (bm != null)
+            bm.recycle();
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inMutable = true;//set Mutable,so can setpixel
         bm = BitmapFactory.decodeFile(bmpFile, options);
@@ -203,31 +208,39 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 mHandler.sendEmptyMessage(0);
             }
         } else {
+            if (imaginer != null) {
+                imaginer.finalize();//回收Native code分配的内存
+                imaginer = null;
+                currX = -1; //reset cutrent point
+                currY = -1;
+            }
             recodeBmp(bm);
             drawBmp(holder, bm);
             currFoucStatus = true;
         }
     }
 
+    //set bitmap data to int[],for native code deal with
     private void recodeBmp(Bitmap bm) {
-        if(bm != null)
-        {
-            imaginer = new Imaginer(bm);
+        if (bm != null) {
+            if (imaginer == null) {
+                imaginer = new Imaginer(bm);
+            }
+            /*
             int W = bm.getWidth();
             int H = bm.getHeight();
             int x = 0,y = 0;
             int pixel = 0;
-            Pixels pixels = null;
+            //Pixels pixels = null;
             for (y = 0; y < H; ++y) {
                 for (x = 0; x < W; ++x) {
                     pixel = bm.getPixel(x, y);
                     imaginer.addCimgaData(pixel);
-                    imaginer.setImageData(pixel, x, y);
+                   // imaginer.setImageData(pixel, x, y);
                 }
             }
+            */
         }
-        imaginer.init();
-        System.out.print("recode bitmap finish\n");
     }
 
     @Override
@@ -239,7 +252,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 break;
             case R.id.setFoucs:
                 //inputDialog("You Can set foucs Range");
-                focuScale = returnValue;
+                //focuScale = returnValue;
                 final EditText inputServer = new EditText(this);
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("You Can set foucs Range").setIcon(android.R.drawable.ic_dialog_info).setView(inputServer)
@@ -255,11 +268,11 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                     }
                 });
                 builder.show();
-                setfocuScale(focuScale);
+                //setfocuScale(focuScale);
                 break;
             case R.id.nextSpeed:
                 //inputDialog("You Can set next speed(ms)");
-                focuScale = returnValue;
+                //focuScale = returnValue;
                 final EditText nextSpeedServer = new EditText(this);
                 AlertDialog.Builder nextSpeedbuilder = new AlertDialog.Builder(this);
                 nextSpeedbuilder.setTitle("You Can set next speed(ms)").setIcon(android.R.drawable.ic_dialog_info).setView(nextSpeedServer)
@@ -275,7 +288,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                     }
                 });
                 nextSpeedbuilder.show();
-                setNextSpeed(nextSpeeds);
+                //setNextSpeed(nextSpeeds);
                 break;
             default:
                 break;
@@ -296,65 +309,55 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         public void run() {
             super.run();
             init_bmp();
-            int ranLeft = -1;
-            int ranTop = -1;
             Bitmap newBmp;
             int[] newPoint = null;
-            imaginer.getStartPoint(0,0);
-            startX = imaginer.getStartX();
-            startY = imaginer.getStartY();
-            while (refresh) {
-                if (nextSteps-- > 0 && startX > 0 && startY > 0) {
-                    if (isNewStart || ranLeft < 0 && ranTop < 0) {
-                        ranLeft = startX;
-                        ranTop = startY;
-                        isNewStart = false;
-                        isBack = false;
-                        isExit = false;
-                    }
-                    newPoint = imaginer.gotoNextPoint(ranLeft, ranTop);
-                    ranLeft = newPoint[0];
-                    ranTop = newPoint[1];
-                    /*
-                    newBmp = fullHere(ranLeft, ranTop);
-                    if (newBmp != null) {
-                        drawBmp(holder, newBmp);
-                    }*/
-                    if (currFoucStatus) {//draw on the foucs picture
-                        newBmp = fullHere(ranLeft, ranTop);
-                        if (newBmp != null) {
-                            drawBmp(holder, newBmp);
+            if (imaginer != null && imaginer.init()) {
+                Log.d(TAG, "MyThread run: init Cbitmap finish");
+                imaginer.getStartPoint(0, 0);
+                startX = imaginer.getStartX();
+                startY = imaginer.getStartY();
+                newBmp = fullHere(startX, startY, Color.RED);
+                if (newBmp != null) {
+                    drawBmp(holder, newBmp);
+                }
+                while (refresh) {
+                    if (nextSteps-- > 0 && startX > 0 && startY > 0) {
+                        if (isNewStart || currX < 0 && currY < 0) {
+                            currX = startX;
+                            currY = startY;
+                            isNewStart = false;
+                            isBack = false;
+                            isExit = false;
                         }
-                    } else {//draw on the src picture
-                        newBmp = getNext(ranLeft, ranTop);
-                        drawBmp(holder, newBmp);
-                    }
-                    /*
-                    ranLeft += random.nextInt(2);
-                     ranTop += random.nextInt(2);
-                    //can not out of picture
-                    if (inPicture(ranLeft, ranTop)) {
-                        if (currFoucStatus) {//draw on the foucs picture
-                            newBmp = fullHere(ranLeft, ranTop);
-                            if (newBmp != null) {
+                        newPoint = imaginer.gotoNextPoint(currX, currY);
+                        if (newPoint != null) {
+                            currX = newPoint[0];
+                            currY = newPoint[1];
+                            if (currFoucStatus) {//draw on the foucs picture
+                                if (newPoint[2] == -1) {
+                                    newBmp = fullHere(currX, currY, Color.GREEN);
+                                } else {
+                                    newBmp = fullHere(currX, currY, resetColor);
+                                }
+                                if (newBmp != null) {
+                                    drawBmp(holder, newBmp);
+                                }
+                            } else {//draw on the src picture
+                                newBmp = getNext(currX, currY);
                                 drawBmp(holder, newBmp);
                             }
-                        } else {//draw on the src picture
-                            newBmp = getNext(ranLeft, ranTop);
-                            drawBmp(holder, newBmp);
+                        } else {
+                            Log.d(TAG, "MyThread run: gotoNextPoint error");
                         }
-                    } else {
-                        mHandler.sendEmptyMessage(1);
-                        nextSteps = 0;
-                        ranLeft = -1;
-                        ranTop = -1;
-                    }*/
+                    }
+                    try {
+                        Thread.sleep(nextSpeeds);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
-                try {
-                    Thread.sleep(nextSpeeds);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            } else {
+                Log.e(TAG, "MyThread run: init Cbitmap not OK!");
             }
         }
 
@@ -389,6 +392,10 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
             if (!currFoucStatus) {//at src picture
                 if (bm != null) {
+                    Bitmap fullBmp = fullHere(currX, currY, resetColor);
+                    if (fullBmp != null)
+                        drawBmp(holder, fullBmp);
+                    /*
                     float touchX = event.getX();
                     float touchY = event.getY();
                     if (inPicture(touchX, touchY)) {
@@ -400,11 +407,11 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                         Bitmap fullBmp = fullHere(startX, startY);
                         if (fullBmp != null)
                             drawBmp(holder, fullBmp);
-                        Toast.makeText(MainActivity.this, "X:" + touchX + " Y:" + touchY, Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(MainActivity.this, "X:" + touchX + " Y:" + touchY, Toast.LENGTH_SHORT).show();
                     } else {
                         Toast.makeText(MainActivity.this, "onTouchEvent: Out oyf picture", Toast.LENGTH_SHORT).show();
                         Log.d(TAG, "onTouchEvent: Out oyf picture");
-                    }
+                    }*/
                 }
             } else {//at foucs picture
                 nextSteps = 1;
@@ -426,7 +433,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         return bm;
     }
 
-    private Bitmap fullHere(int x, int y) {
+    private Bitmap fullHere(int x, int y, int color) {
         isBack = false;
         int newScale = (focuScale << 1) + 1;
         float scaleWidth = canvsWidth / newScale;
@@ -448,7 +455,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         if (cy < 0) {
             cy = 0;
         }
-        bm.setPixel(px, py, resetColor);
+        bm.setPixel(px, py, color);
         //Log.i(TAG, "fullHere: createBitmap error" + pixelxy);
         Matrix matrix = new Matrix();
         // 缩放图片动作
@@ -474,7 +481,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     }
 
     private boolean inPicture(float x, float y) {
-        if (x > left+location[0] && x < left + bmpWidth + location[0] &&
+        if (x > left + location[0] && x < left + bmpWidth + location[0] &&
                 y > top + location[1] && y < top + bmpHight + location[1])
             return true;
         return false;

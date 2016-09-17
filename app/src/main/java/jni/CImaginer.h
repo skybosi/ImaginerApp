@@ -8,24 +8,22 @@ class CImaginer
 		int      cheight;
 	private:
 		float    baseSmlrty;
-    RGBQUAD  backGround;
+		RGBQUAD  backGround;
 		vdPIXELS boundarys; //record all boundary line
 		int      granularity;
 		bool     granOpeartor;//contrl the granularity opeartor method
 				//granOpeartor: boundarys will save only largger than granularity value's boundaryline :true
 				//              boundarys will save only smaller than granularity value's boundaryline :false
 	public:
-		CImaginer():cwidth(0),cheight(0){}
-		CImaginer(int width,int height):cwidth(width),cheight(height),granularity(10),
-		                                baseSmlrty(0),granOpeartor(false)
+		CImaginer(int width,int height):cwidth(width),cheight(height),baseSmlrty(0),granularity(10),granOpeartor(false)
 	{
-		cimageData = newImageData(cimageData,cwidth,cheight);
+		newImageData(cimageData,cwidth,cheight);
 	}
 		~CImaginer()
 		{
 			delImageData(cimageData,cheight);
 		}
-		void     showPIXELS(PIXELS& cpixel);
+		void     showPIXELS(const PIXELS& cpixel);
 		bool     insert(const PIXELS& cpixel);
 	public:
 		ppPIXELS getImageData(){return cimageData;}

@@ -5,17 +5,19 @@ ppPIXELS CImaginer::newImageData(ppPIXELS &imageData, int W, int H)
 {
 	// malloc some memroy
 	// imageData = new pPIXELS[W];
-	imageData = (ppPIXELS)calloc(W, sizeof(PIXELS));
+	imageData = (ppPIXELS)calloc(H, sizeof(pPIXELS));
 	if(!imageData)
-		printf("In %s new imageData wrong!\n",__FUNCTION__);
-	// printf("new:(W,H):%d,%d\n",W,H);
+	{
+		LOGE("In %s new imageData wrong!\n",__FUNCTION__);
+	}
+	LOGD("new:(W,H):%d,%d\n",W,H);
 	int y;
 	for (y = 0; y < H; y++)
 	{
 		// imageData[y] = new PIXELS[W];
 		imageData[y] = (pPIXELS)calloc(W, sizeof(PIXELS));
 		if (!imageData[y])
-			printf("In %s new imageData[y] wrong!\n",__FUNCTION__);
+			LOGE("In %s new imageData[y] wrong!\n",__FUNCTION__);
 	}
 	return imageData;
 }
@@ -32,6 +34,7 @@ bool CImaginer::delImageData(ppPIXELS& imageData, int H)
 		}
 		// delete []imageData;
 		free(imageData);
+		LOGD("In %s free imageData memory\n",__FUNCTION__);
 		imageData = NULL;
 	}
 	else
@@ -45,9 +48,9 @@ bool CImaginer::insert(const PIXELS& cpixel)
 {
 	int x = cpixel.getX();
 	int y = cpixel.getY();
-
-	//cimageData[cheight-1-y][x] = cpixel;
-	cimageData[x][y] = cpixel;
+	//LOGD("insert: \t");
+	//showPIXELS(cpixel);
+	cimageData[y][x] = cpixel;
 	return true;
 }
 
@@ -82,26 +85,26 @@ float CImaginer::getSimilarity(Position direction,int x,int y,int step)
 		case Down:
 			if(y+step >= cheight)
 				return -1;
-			potCurnt = cimageData[x][y];
-			potRight = cimageData[x][y+step];
+			potCurnt = cimageData[y][x];
+			potRight = cimageData[y+step][x];
 			break;
 		case Right:
 			if(x+step >= cwidth)
 				return -1;
-			potCurnt = cimageData[x][y];
-			potRight = cimageData[x+step][y];
+			potCurnt = cimageData[y][x];
+			potRight = cimageData[y][x+step];
 			break;
 		case Up:
 			if(y-step < 0)
 				return -1;
-			potCurnt = cimageData[x][y];
-			potRight = cimageData[x][y-step];
+			potCurnt = cimageData[y][x];
+			potRight = cimageData[y-step][x];
 			break;
 		case Left:
 			if(x-step < 0)
 				return -1;
-			potCurnt = cimageData[x][y];
-			potRight = cimageData[x-step][y];
+			potCurnt = cimageData[y][x];
+			potRight = cimageData[y][x-step];
 			break;
 		default:
 			break;
@@ -149,7 +152,7 @@ PIXELS CImaginer::get_pix(int x, int y)
 		ppot.setempty(true);
 		return ppot;
 	}
-	ppot.setRGB(cimageData[x][y]);
+	ppot.setRGB(cimageData[y][x]);
 	/*
 	if(alikeBackground(ppot))
 	{
@@ -176,19 +179,19 @@ bool CImaginer::isBoundaryPoint(int& x,int& y)
 		if (fabs(similarity - avgSimi) > 0.12)
 		{
 			++x;
-			setBackground(cimageData[x][y]);
+			setBackground(cimageData[y][x]);
 			LOGD("X:%d\tY:%d\tbaseSmlrty:%f\n",x,y,similarity);
 			//printf("finded :%lf\n", similarity);
 			//make sure the edge point is not a shade
 			//work is not stable, need TODO
 			/*
-			if(cimageData[x][y].getEdge() >= 0)
+			if(cimageData[y][x].getEdge() >= 0)
 			{
 				checkSmlrty = getSimilarity(Right,x,y);
 				if(checkSmlrty != 1 && checkSmlrty != similarity)
 				{
 					++x;
-					setBackground(cimageData[x][y]);
+					setBackground(cimageData[y][x]);
 					similarity = checkSmlrty;
 				}
 			}
@@ -258,10 +261,10 @@ bool CImaginer::getBoundaryLine(int& x, int& y)
 	int beforeX;
 	beforeX = x;
 	size_t bsize = boundarys.size();
-	x = trackDown(cimageData[x][y]);
+	x = trackDown(cimageData[y][x]);
 	if( boundarys.size() != bsize || x != beforeX)
 	{
-		//footprint.add(cimageData[beforeX][y],cimageData[x][y],skipTable);
+		//footprint.add(cimageData[beforeX][y],cimageData[y][x],skipTable);
 		return true;
 	}
 	return false;
@@ -303,18 +306,18 @@ int  CImaginer::trackDown(PIXELS& startPoint)
 	//    startPoint.show_PIXELS();
 	//    printf("\n");
 	// */
-	//    SETCURR(direction,cimageData[x][y]);
+	//    SETCURR(direction,cimageData[y][x]);
 	//    /*
 	//    if(y != sy)
 	//    {
-	//        cimageData[x][y].setEdge(-1);
+	//        cimageData[y][x].setEdge(-1);
 	//    }
 	//    else
 	//    {
-	//        cimageData[x][y].setEdge(-2);
+	//        cimageData[y][x].setEdge(-2);
 	//    }
 	//    */
-	//    boundaryline.push_back(cimageData[x][y]);
+	//    boundaryline.push_back(cimageData[y][x]);
 
 	//SETCURR(Down,startPoint);
 	//startPoint.setpPosStatus();
@@ -335,7 +338,7 @@ int  CImaginer::trackDown(PIXELS& startPoint)
 	direction = rdirection;//rollback rdirection to direction
 	while(1)//getRpoint
 	{
-		PIXELS& prevPoint = cimageData[x][y];
+		PIXELS& prevPoint = cimageData[y][x];
 		prevDiret = direction;
 		//printf("rdirection:%s x:%d y:%d\n",Pos2str(direction).c_str(),x,y);
 		if(getRpoint(direction,x,y))
@@ -352,7 +355,7 @@ int  CImaginer::trackDown(PIXELS& startPoint)
 					//genSkipTable(prevPoint,skipTable2);
 				}
 				//set frame Point
-				framePoint.setframePoint(direction,cimageData[x][y]);
+				framePoint.setframePoint(direction,cimageData[y][x]);
 				//set boundary line point
 				boundaryline.push_back(prevPoint);
 				break;
@@ -415,7 +418,7 @@ int  CImaginer::trackDown(PIXELS& startPoint)
 				}
 			}
 			//set frame Point
-			framePoint.setframePoint(direction,cimageData[x][y]);
+			framePoint.setframePoint(direction,cimageData[y][x]);
 			//set boundary line point
 			boundaryline.push_back(prevPoint);
 			/*
@@ -437,7 +440,7 @@ int  CImaginer::trackDown(PIXELS& startPoint)
 	direction = ldirection;//rollback ldirection to direction
 	while(rEdge)//getLpoint
 	{
-		PIXELS& prevPoint = cimageData[x][y];
+		PIXELS& prevPoint = cimageData[y][x];
 		prevDiret = direction;
 		//printf("rdirection:%s x:%d y:%d\n",Pos2str(direction).c_str(),x,y);
 		if(getLpoint(direction,x,y))
@@ -454,7 +457,7 @@ int  CImaginer::trackDown(PIXELS& startPoint)
 					//genSkipTable(prevPoint,skipTable2);
 				}
 				//set frame Point
-				framePoint.setframePoint(direction,cimageData[x][y]);
+				framePoint.setframePoint(direction,cimageData[y][x]);
 				//set boundary line point
 				boundaryline.push_back(prevPoint);
 				/*
@@ -523,7 +526,7 @@ int  CImaginer::trackDown(PIXELS& startPoint)
 				}
 			}
 			//set frame Point
-			framePoint.setframePoint(direction,cimageData[x][y]);
+			framePoint.setframePoint(direction,cimageData[y][x]);
 			//set boundary line point
 			boundaryline.push_back(prevPoint);
 			/*
@@ -1029,12 +1032,12 @@ bool CImaginer::testStartP(PIXELS& pixel)
 //    pixel.show_PIXELS();
 //    printf("\n");
     getNext(nextPos,x,y,nexts,step);
-//    cimageData[x][y].show_PIXELS();
+//    cimageData[y][x].show_PIXELS();
 //    printf("\n");
-    while( !isEdge(x,y) && numPoint < 25 && cimageData[x][y].getEdge() >= 0)
+    while( !isEdge(x,y) && numPoint < 25 && cimageData[y][x].getEdge() >= 0)
     {
         getNext(nextPos,x,y,nexts,step);
-//        cimageData[x][y].show_PIXELS();
+//        cimageData[y][x].show_PIXELS();
 //        printf("\n");
         numPoint++;
     }
@@ -1051,7 +1054,7 @@ bool CImaginer::isEdge(int x,int y)
 	else
 		return false;
 }
-void CImaginer::showPIXELS(PIXELS& cpixel)
+void CImaginer::showPIXELS(const PIXELS& cpixel)
 {
 	LOGD("X: %-3d Y: %-3d edge:%d\t[R,G,B]:(%03d,%03d,%03d)\n",
 	     cpixel.getX(), cpixel.getY(), cpixel.getEdge(),

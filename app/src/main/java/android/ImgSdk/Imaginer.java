@@ -15,21 +15,17 @@ public final class Imaginer {
     private int bmpWidth;
     private int bmpHeight;
     private int[] cimageData;
-    //private Pixels[][] imageData;
-    private int currPostion;
-    private int startX;
-    private int startY;
-
+    private int[][][] boundrys;
+    private int curX;
+    private int curY;
     public Imaginer(Bitmap bitmap) {
-        this.currPostion = 0;
         this.bitmap = bitmap;
         this.bmpWidth = bitmap.getWidth();
         this.bmpHeight = bitmap.getHeight();
-        //this.imageData = new Pixels[bmpWidth][bmpHeight];
         this.cimageData = new int[bmpWidth * bmpHeight];
         bitmap.getPixels(cimageData, 0, bmpWidth, 0, 0, bmpWidth, bmpHeight);
-        this.startX = 0;
-        this.startY = 0;
+        this.curX = 0;
+        this.curY = 0;
     }
 
     public synchronized boolean init() {
@@ -39,43 +35,34 @@ public final class Imaginer {
     public int[] getImageData() {
         return cimageData;
     }
-
-    public synchronized void addCimgaData(int pixels) {
-        cimageData[currPostion++] = pixels;
+    public void JgetBoundrys() {
+       boundrys = getBoundrys();
     }
 
-    public int[] getStartPoint(int x, int y) {
-        int[] startpoint = new int[2];
-        startpoint = isStartPoint(x, y);
-        if (startpoint != null) {
-            startX = startpoint[0];
-            startY = startpoint[1];
-            return startpoint;
-        } else {
-            return null;
-        }
-    }
-
-    public int[] gotoNextPoint(int x, int y) {
-        int[] nextpoint = new int[3];
-        nextpoint = getNextPoint(x, y);
-        if (nextpoint[0] == startX && nextpoint[1] == startY) {
-            //next point add start point,will get next start point from current point
-            if (getStartPoint(startX + 1, startY) != null) {
-                nextpoint[0] = startX;
-                nextpoint[1] = startY;
-                nextpoint[2] = 6;
+    public int[] gotoNextPoint() {
+        int next[] = new int[3];
+        int linesize = 0;
+        for(int i = curX;i < boundrys.length;++i )
+        {
+            linesize = boundrys[i].length;
+            for(int j = curY;j < linesize;++j) {
+               next = boundrys[curX][curY];
+                curY++;
+                break;
             }
+            if(curY < linesize)
+                break;
+            curX++;
         }
-        return nextpoint;
+        return next;
     }
 
     public int getStartX() {
-        return startX;
+        return boundrys[0][0][0];
     }
 
     public int getStartY() {
-        return startY;
+        return boundrys[0][0][1];
     }
 
     public synchronized void finalize() {
@@ -105,14 +92,9 @@ public final class Imaginer {
     public native boolean init(int[] bmpData, int width, int height);
 
     /**
-     * get the boudray's start point
+     * @return
      */
-    public native int[] isStartPoint(int x, int y);
-
-    /**
-     * After getStartPoint will from here to get next boudray point
-     */
-    public native int[] getNextPoint(int curX, int curY);
+    public native int[][][] getBoundrys();
 
     private native void cfinalize();
 }

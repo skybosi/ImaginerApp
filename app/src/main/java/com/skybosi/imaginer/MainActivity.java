@@ -313,7 +313,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             int[] newPoint = null;
             if (imaginer != null && imaginer.init()) {
                 Log.d(TAG, "MyThread run: init Cbitmap finish");
-                imaginer.getStartPoint(0, 0);
+                imaginer.JgetBoundrys();
                 startX = imaginer.getStartX();
                 startY = imaginer.getStartY();
                 newBmp = fullHere(startX, startY, Color.RED);
@@ -329,16 +329,17 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                             isBack = false;
                             isExit = false;
                         }
-                        newPoint = imaginer.gotoNextPoint(currX, currY);
+                        newPoint = imaginer.gotoNextPoint();
                         if (newPoint != null) {
                             currX = newPoint[0];
                             currY = newPoint[1];
                             if (currFoucStatus) {//draw on the foucs picture
-                                if (newPoint[2] == -1) {
-                                    newBmp = fullHere(currX, currY, Color.GREEN);
-                                } else {
-                                    newBmp = fullHere(currX, currY, resetColor);
-                                }
+//                                if (newPoint[2] == -1) {
+//                                    newBmp = fullHere(currX, currY, Color.GREEN);
+//                                } else {
+//                                    newBmp = fullHere(currX, currY, resetColor);
+//                                }
+                                newBmp = fullHere(currX, currY, resetColor);
                                 if (newBmp != null) {
                                     drawBmp(holder, newBmp);
                                 }

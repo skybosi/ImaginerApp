@@ -17,19 +17,11 @@ JNIEXPORT jboolean JNICALL Java_android_ImgSdk_Imaginer_init
 
 /*
  * Class:     android_ImgSdk_Imaginer
- * Method:    isStartPoint
- * Signature: (II)[I
+ * Method:    getBoundrys
+ * Signature: ()[[[I
  */
-JNIEXPORT jintArray JNICALL Java_android_ImgSdk_Imaginer_isStartPoint
-  (JNIEnv *, jobject, jint, jint);
-
-/*
- * Class:     android_ImgSdk_Imaginer
- * Method:    getNextPoint
- * Signature: (II)[I
- */
-JNIEXPORT jintArray JNICALL Java_android_ImgSdk_Imaginer_getNextPoint
-  (JNIEnv *, jobject, jint, jint);
+JNIEXPORT jobjectArray JNICALL Java_android_ImgSdk_Imaginer_getBoundrys
+  (JNIEnv *, jobject);
 
 /*
  * Class:     android_ImgSdk_Imaginer

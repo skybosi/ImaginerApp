@@ -1,5 +1,5 @@
-/* 
- * define some marco of bmp file, if not a windows 
+/*
+ * define some marco of bmp file, if not a windows
  * operate system.
  * define some marco about pixel point
  */
@@ -23,52 +23,53 @@ typedef U8 BYTE8;
 typedef struct tagBITMAPFILEHEADER
 {
 
-	U16 bfType;
-	U32 bfSize;
-	U16 bfReserved1;
-	U16 bfReserved2;
-	U32 bfOffBits;
+    U16 bfType;
+    U32 bfSize;
+    U16 bfReserved1;
+    U16 bfReserved2;
+    U32 bfOffBits;
 } BITMAPFILEHEADER;
 
 typedef struct tagBITMAPINFOHEADER
 {
-	U32 biSize;
-	U32 biWidth;
-	U32 biHeight;
-	U16 biPlanes;
-	U16 biBitCount;
-	U32 biCompression;
-	U32 biSizeImage;
-	U32 biXPelsPerMeter;
-	U32 biYPelsPerMeter;
-	U32 biClrUsed;
-	U32 biClrImportant;
+    U32 biSize;
+    U32 biWidth;
+    U32 biHeight;
+    U16 biPlanes;
+    U16 biBitCount;
+    U32 biCompression;
+    U32 biSizeImage;
+    U32 biXPelsPerMeter;
+    U32 biYPelsPerMeter;
+    U32 biClrUsed;
+    U32 biClrImportant;
 } BITMAPINFOHEADER;
 
 typedef struct tagRGBQUAD
 {
-	U8 rgbBlue;
-	U8 rgbGreen;
-	U8 rgbRed;
-	U8 rgbReserved;
+    U8 rgbBlue;
+    U8 rgbGreen;
+    U8 rgbRed;
+    U8 rgbReserved;
+    void setRGBA(U8 R,U8 G,U8 B,U8 A = 255){rgbRed = R,rgbGreen = G,rgbBlue = B,rgbReserved = A;}
 } RGBQUAD;
 
 typedef struct tagBITMAPINFO
 {
-	BITMAPINFOHEADER bmiHeader;
-	RGBQUAD bmiColors[1];
+    BITMAPINFOHEADER bmiHeader;
+    RGBQUAD bmiColors[1];
 } BITMAPINFO;
-
 
 typedef struct tagBITMAP
 {
-	BITMAPFILEHEADER bfHeader;
-	BITMAPINFO biInfo;
+    BITMAPFILEHEADER bfHeader;
+    BITMAPINFO biInfo;
 } BITMAPFILE;
+
 typedef struct tagALLHEAD
 {
-	BITMAPFILEHEADER bmpHead;
-	BITMAPINFOHEADER infoHead;
+    BITMAPFILEHEADER bmpHead;
+    BITMAPINFOHEADER infoHead;
 } BMPALLHEAD;
 
 #endif // pixel marco :[]
@@ -78,69 +79,88 @@ typedef struct tagALLHEAD
 #define MAX(x,y) (x)<(y)?(y):(x)
 enum colorType
 {
-	Red,
-	Green,
-	Blue,
-	Pricolor
+    Red,
+    Green,
+    Blue,
+    Pricolor
 };
 enum Position
 {
-	Up,
-	Down,
-	Left,
-	Right,
-	Front,
-	Back,
-	None
+    Up,
+    Down,
+    Left,
+    Right,
+    Front,
+    Back,
+    None
 };
 //Get Position's string
 inline std::string Pos2str(Position pos)
 {
-	switch(pos)
-	{
-		case Up:
-			return "Up   ";
-			break;
-		case Down:
-			return "Down ";
-			break;
-		case Left:
-			return "Left ";
-			break;
-		case Right:
-			return "Right";
-			break;
-		case Front:
-			return "Front";
-			break;
-		case Back:
-			return "Back ";
-			break;
-		default:
-			return "None ";
-			break;
-	}
+    switch(pos)
+    {
+        case Up:
+            return "Up   ";
+            break;
+        case Down:
+            return "Down ";
+            break;
+        case Left:
+            return "Left ";
+            break;
+        case Right:
+            return "Right";
+            break;
+        case Front:
+            return "Front";
+            break;
+        case Back:
+            return "Back ";
+            break;
+        default:
+            return "None ";
+            break;
+    }
 }
 //Get colorType's string
 inline std::string color2str(colorType color)
 {
-	switch(color)
-	{
-		case Pricolor:
-			return "All";
-			break;
-		case Red:
-			return "Red";
-			break;
-		case Green:
-			return "Green";
-			break;
-		case Blue:
-			return "Blue";
-			break;
-		default:
-			return "all";
-			break;
-	}
+    switch(color)
+    {
+        case Pricolor:
+            return "All";
+            break;
+        case Red:
+            return "Red";
+            break;
+        case Green:
+            return "Green";
+            break;
+        case Blue:
+            return "Blue";
+            break;
+        default:
+            return "all";
+            break;
+    }
 }
+
+class ImgException
+{
+public:
+    ImgException(){}
+    ImgException(const char* str)
+    {
+        msg = str;
+    }
+    ImgException(std::string str)
+    {
+        msg = str;
+    }
+    ImgException(const ImgException& rhs)
+    {
+        this->msg = rhs.msg;
+    }
+    std::string msg;
+};
 #endif // ibmp.h :[]

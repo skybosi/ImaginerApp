@@ -316,7 +316,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 imaginer.JgetBoundrys();
                 startX = imaginer.getStartX();
                 startY = imaginer.getStartY();
-                newBmp = fullHere(startX, startY, Color.RED);
+                newBmp = fullHere(startX, startY);
                 if (newBmp != null) {
                     drawBmp(holder, newBmp);
                 }
@@ -330,16 +330,15 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                             isExit = false;
                         }
                         newPoint = imaginer.gotoNextPoint();
+                        if(newPoint[0] == 0 && newPoint[1]==0 && newPoint[1] == 0) {
+                            Log.d(TAG, "get next point is finished!\n");
+                            break;
+                        }
                         if (newPoint != null) {
                             currX = newPoint[0];
                             currY = newPoint[1];
                             if (currFoucStatus) {//draw on the foucs picture
-//                                if (newPoint[2] == -1) {
-//                                    newBmp = fullHere(currX, currY, Color.GREEN);
-//                                } else {
-//                                    newBmp = fullHere(currX, currY, resetColor);
-//                                }
-                                newBmp = fullHere(currX, currY, resetColor);
+                                newBmp = fullHere(currX, currY);
                                 if (newBmp != null) {
                                     drawBmp(holder, newBmp);
                                 }
@@ -393,7 +392,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
             if (!currFoucStatus) {//at src picture
                 if (bm != null) {
-                    Bitmap fullBmp = fullHere(currX, currY, resetColor);
+                    Bitmap fullBmp = fullHere(currX, currY);
                     if (fullBmp != null)
                         drawBmp(holder, fullBmp);
                     /*
@@ -430,11 +429,12 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         int pixelxy = bm.getPixel(px, py);
         Pixels pixels = new Pixels(px,py,pixelxy);
         */
-        bm.setPixel(px, py, resetColor);
+        int pixelxy = bm.getPixel(px, py);
+        bm.setPixel(px, py, 0xFFFFFFFF-pixelxy);
         return bm;
     }
 
-    private Bitmap fullHere(int x, int y, int color) {
+    private Bitmap fullHere(int x, int y) {
         isBack = false;
         int newScale = (focuScale << 1) + 1;
         float scaleWidth = canvsWidth / newScale;
@@ -456,7 +456,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         if (cy < 0) {
             cy = 0;
         }
-        bm.setPixel(px, py, color);
+        int pixelxy = bm.getPixel(px, py);
+        bm.setPixel(px, py, 0xFFFFFFFF-pixelxy);
         //Log.i(TAG, "fullHere: createBitmap error" + pixelxy);
         Matrix matrix = new Matrix();
         // 缩放图片动作

@@ -56,8 +56,6 @@ JNIEXPORT jobjectArray JNICALL Java_android_ImgSdk_Imaginer_getBoundrys(JNIEnv *
 	LOGD("will be get All Boundrys...\n");
 	if(dpcer != NULL)
 	{
-		//int** datas;
-		//datas = newData(dataPcerImp->getWidth(),dataPcerImp->getHeight());
 		LOGD("dealManager tp get Boundrys OK\n");
 		dpcer->dealManager("g");
 		LOGD("dealManager tp get Boundrys OK\n");
@@ -74,15 +72,22 @@ JNIEXPORT jobjectArray JNICALL Java_android_ImgSdk_Imaginer_getBoundrys(JNIEnv *
 		//的类是一个二维数组，也就是数组里的每个元素都是一个二维数组，  
 		//这样one就是一个三维数组。  
 		jobjectArray one = env->NewObjectArray(bsize, intArrCls2, NULL);
-		for(int i = 0; i < bsize; ++i)  
+		LOGD("boundry size:%d\n",bsize);
+		for(int i = 0; i < bsize; ++i)
 		{
 			//一维数组  
 			jclass intArrCls = env->FindClass("[I");  
 			boundry = BoundrysData[i];
 			sizeAb = boundry.size();
-			LOGD("creat a int[] size is:%d\n",sizeAb);
-			//创建一个有10个元素，每个元素的值是  一维数组的数组  
-			jobjectArray second = env->NewObjectArray(sizeAb, intArrCls, NULL);  
+			LOGD("i:%d \tcreat a int[] size is:%d\n",i,sizeAb);
+			//创建一个有10个元素，每个元素的值是  一维数组的数组
+			jobjectArray second = env->NewObjectArray(sizeAb, intArrCls, NULL);
+			if(second !=NULL) {
+				LOGD("new a jobjectArray size is:%d OK\n", sizeAb);
+			}else
+			{
+				LOGD("new a jobjectArray size is:%d is fail\n", sizeAb);
+			}
 			//给以维数据填充值  
 			for (int j = 0; j < sizeAb; ++j) 
 			{  
@@ -91,7 +96,7 @@ JNIEXPORT jobjectArray JNICALL Java_android_ImgSdk_Imaginer_getBoundrys(JNIEnv *
 				tmp[0] = boundry[j].getX();
 				tmp[1] = boundry[j].getY();
 				tmp[2] = boundry[j].getEdge();
-				LOGD("tmp pixle is x:%d  y:%d  edge:%d\n",tmp[0],tmp[1],tmp[2]);
+				//LOGD("tmp pixle is x:%d  y:%d  edge:%d\n",tmp[0],tmp[1],tmp[2]);
 				//把temp里的0-3的数据值设置给iarr里  
 				env->SetIntArrayRegion(iarr, 0, 3, tmp);  
 				//给一维数组的第i个元素设置值  

@@ -1,6 +1,7 @@
 package android.ImgSdk;
 
 import android.graphics.Bitmap;
+import android.util.Log;
 
 /**
  * Created by dejian.fei on 2016/8/30.
@@ -18,6 +19,7 @@ public final class Imaginer {
     private int[][][] boundrys;
     private int curX;
     private int curY;
+    private String TAG = "IMAGINER";
     public Imaginer(Bitmap bitmap) {
         this.bitmap = bitmap;
         this.bmpWidth = bitmap.getWidth();
@@ -52,8 +54,12 @@ public final class Imaginer {
             }
             if(curY < linesize)
                 break;
-            curX++;
+            else {
+                curY = 0;
+                curX++;
+            }
         }
+        Log.d(TAG,"next pixle is x:" + next[0] + "\ty:" + next[1] + "\tedge:"+ next[2]);
         return next;
     }
 

@@ -24,4 +24,9 @@ MY_CPP_LIST := $(wildcard $(LOCAL_PATH)/../src/*.cpp)
 LOCAL_SRC_FILES := $(MY_CPP_LIST:$(LOCAL_PATH)/%=%)
 #生成共享库
 include $(BUILD_SHARED_LIBRARY)
+#$(warning "the value of HOST_OS is$(HOST_OS)") 
+ifeq ($(HOST_OS),windows)
+$(cmd /k xcopy ..\libs\* ..\..\..\jniLibs  /Y /S)
+else
 $(shell cp -arf $(LOCAL_PATH)/../libs/* $(LOCAL_PATH)/../../../jniLibs)
+endif

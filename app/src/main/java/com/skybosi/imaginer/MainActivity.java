@@ -140,6 +140,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.openSD) {
+            nextSteps = 1;
             loadFile();
         } else if (v.getId() == R.id.nextPoint) {
             if (tmpSteps <= 1)

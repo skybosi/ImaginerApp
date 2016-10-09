@@ -50,7 +50,7 @@ JNIEXPORT jboolean JNICALL Java_android_ImgSdk_Imaginer_init(JNIEnv * env, jobje
  * Class:     android_ImgSdk_Imaginer
  * Method:    getBoundrys
  * Signature: ()[[[I
- */
+
 JNIEXPORT jobjectArray JNICALL Java_android_ImgSdk_Imaginer_getBoundrys(JNIEnv *env, jobject obj)
 {
 	LOGD("will be get All Boundrys...\n");
@@ -64,7 +64,6 @@ JNIEXPORT jobjectArray JNICALL Java_android_ImgSdk_Imaginer_getBoundrys(JNIEnv *
 		int bsize = BoundrysData.size();
 		LOGD("Boundrys size is:%d\n",bsize);
 		int sizeAb = 0;
-			
 		//获得二维数组的类  
 		jclass intArrCls2 = env->FindClass("[[I");
 		
@@ -115,6 +114,69 @@ JNIEXPORT jobjectArray JNICALL Java_android_ImgSdk_Imaginer_getBoundrys(JNIEnv *
 		LOGE("Data Processing Center is vaild!\n");
 	return NULL;
 }
+*/
+
+/*
+ * Class:     android_ImgSdk_Imaginer
+ * Method:    getBoundrys
+ * Signature: ()[[J
+ *
+ * 11111111 11111111 11111111 11111110    0xFFFFFFFE00000000  高31位  存 x坐标 int
+ * 1 11111111 11111111 11111111 11111100  0x1FFFFFFFC         次31位  存 y坐标 int
+ * 11                                     0x3                 后2位   存 edge  int  00->0, 10->-1, 11->-2
+ *
+ */
+JNIEXPORT jobjectArray JNICALL Java_android_ImgSdk_Imaginer_getBoundrys(JNIEnv *env, jobject obj)
+{
+	jobjectArray result = NULL;
+	LOGD("will be get All Boundrys...\n");
+	if(dpcer != NULL)
+	{
+		LOGD("dealManager tp get Boundrys OK\n");
+		dpcer->dealManager("g");
+		vdPIXELS BoundrysData = dpcer->getBoundrysData();
+		dPIXELS   boundry;
+		int bsize = BoundrysData.size();
+		LOGD("Boundrys size is:%d\n",bsize);
+		int sizeAb = 0;
+		jclass longArrCls = env->FindClass("[J");
+		result = env->NewObjectArray(bsize, longArrCls, NULL);
+        LOGD("new a ObjectArray to save Boundrys");
+		for (long i = 0; i < bsize; i++)
+		{
+			boundry = BoundrysData[i];
+			sizeAb = boundry.size();
+            //LOGD("now is %d Boundrys\n",i);
+			jlongArray larr = env->NewLongArray(sizeAb);
+            //LOGD("now new a LongArray to save this Boundrys size is :%d\n",sizeAb);
+			jlong l = 0;
+			for(long j = 0; j < sizeAb; j++)
+			{
+                switch (boundry[j].getEdge())
+                {
+                    case 0:
+                        l = ((l | boundry[j].getY()) << 2) | ((l | boundry[j].getX())<<33);
+                        break;
+                    case -2:
+                        l = ((l | boundry[j].getY()) << 2) | ((l | boundry[j].getX())<<33) | 3;
+                        break;
+                    case -1:
+                        l = ((l | boundry[j].getY()) << 2) | ((l | boundry[j].getX())<<33) | 2;
+                        break;
+                    default:
+                        LOGE("whyyyyyyyyy!\n");
+                }
+				//LOGD("pixle is x:%d  y:%d  edge:%d long:%ld(0x%lx)\n",boundry[j].getX(),boundry[j].getY(),boundry[j].getEdge(),l,l);
+				env->SetLongArrayRegion(larr, j, 1, &l);
+                l = 0;
+			}
+			env->SetObjectArrayElement(result, i, larr);
+			env->DeleteLocalRef(larr);
+		}
+	}
+	return result;
+}
+
 
 
 /*

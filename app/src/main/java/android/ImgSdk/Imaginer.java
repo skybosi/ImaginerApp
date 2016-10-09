@@ -16,7 +16,7 @@ public final class Imaginer {
     private int bmpWidth;
     private int bmpHeight;
     private int[] cimageData;
-    private int[][][] boundrys;
+    private long[][] boundrys;
     private int curX;
     private int curY;
     private String TAG = "IMAGINER";
@@ -48,7 +48,23 @@ public final class Imaginer {
         {
             linesize = boundrys[i].length;
             for(int j = curY;j < linesize;++j) {
-               next = boundrys[curX][curY];
+                next[0] = (int)((boundrys[i][curY] & 0xFFFFFFFE00000000L)>>33);
+                next[1] = (int)((boundrys[i][curY] & 0x1FFFFFFFCL) >> 2);
+                next[2] = (int)((boundrys[i][curY] & 3L));
+                switch (next[2])
+                {
+                    case 0:
+                        next[2] = 0;
+                        break;
+                    case 3:
+                        next[2] = -2;
+                        break;
+                    case 2:
+                        next[2] = -1;
+                        break;
+                    default:
+                        next[2] = 0;
+                }
                 curY++;
                 break;
             }
@@ -64,11 +80,12 @@ public final class Imaginer {
     }
 
     public int getStartX() {
-        return boundrys[0][0][0];
+        return (int)((boundrys[0][0] & 0xFFFFFFFE00000000L)>>33);
     }
 
     public int getStartY() {
-        return boundrys[0][0][1];
+        curY++;
+        return (int)((boundrys[0][0] & 0x1FFFFFFFCL) >> 2);
     }
 
     public synchronized void finalize() {
@@ -100,7 +117,7 @@ public final class Imaginer {
     /**
      * @return
      */
-    public native int[][][] getBoundrys();
+    public native long[][] getBoundrys();
 
     private native void cfinalize();
 }

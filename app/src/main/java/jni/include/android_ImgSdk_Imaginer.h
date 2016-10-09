@@ -18,7 +18,7 @@ JNIEXPORT jboolean JNICALL Java_android_ImgSdk_Imaginer_init
 /*
  * Class:     android_ImgSdk_Imaginer
  * Method:    getBoundrys
- * Signature: ()[[[I
+ * Signature: ()[[J
  */
 JNIEXPORT jobjectArray JNICALL Java_android_ImgSdk_Imaginer_getBoundrys
   (JNIEnv *, jobject);

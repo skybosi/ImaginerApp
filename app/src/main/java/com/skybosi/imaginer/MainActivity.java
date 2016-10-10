@@ -1,7 +1,6 @@
 package com.skybosi.imaginer;
 
 import android.ImgSdk.Imaginer;
-import android.ImgSdk.Pixels;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -17,12 +16,14 @@ import android.graphics.PorterDuffXfermode;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.Toolbar.OnMenuItemClickListener;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -69,6 +70,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private Imaginer imaginer = null;
     private int currX = -1;
     private int currY = -1;
+    private float phoneW = 0;
+    private float phoneH = 0;
 
     //get surfaceview's location for the location on the picture
     @Override
@@ -133,6 +136,11 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             }
         });
         Toast.makeText(MainActivity.this, "You can long click to set next steps you Want!", Toast.LENGTH_LONG).show();
+        WindowManager manager = this.getWindowManager();
+        DisplayMetrics outMetrics = new DisplayMetrics();
+        manager.getDefaultDisplay().getMetrics(outMetrics);
+        phoneW = outMetrics.widthPixels;
+        phoneH = outMetrics.heightPixels;
     }
 
     MyThread thread = null;
@@ -388,14 +396,15 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     }
 
     // 实现onTouchEvent方法
-    public boolean onTouchEvent(MotionEvent event) {
+    public synchronized boolean onTouchEvent(MotionEvent event) {
         // 如果是按下操作
-        if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            if (!currFoucStatus) {//at src picture
-                if (bm != null) {
-                    Bitmap fullBmp = fullHere(currX, currY);
-                    if (fullBmp != null)
-                        drawBmp(holder, fullBmp);
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                if (!currFoucStatus) {//at src picture
+                    if (bm != null) {
+                        Bitmap fullBmp = fullHere(currX, currY);
+                        if (fullBmp != null)
+                            drawBmp(holder, fullBmp);
                     /*
                     float touchX = event.getX();
                     float touchY = event.getY();
@@ -413,10 +422,11 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                         Toast.makeText(MainActivity.this, "onTouchEvent: Out oyf picture", Toast.LENGTH_SHORT).show();
                         Log.d(TAG, "onTouchEvent: Out oyf picture");
                     }*/
+                    }
+                } else {//at foucs picture
+                    nextSteps = 1;
                 }
-            } else {//at foucs picture
-                nextSteps = 1;
-            }
+                break;
         }
         return super.onTouchEvent(event);
     }
@@ -496,6 +506,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             cleanScreen();
             drawBmp(holder, bm);
             isBack = true;
+            nextSteps = 0;
         } else {
             exit();
         }
@@ -511,6 +522,33 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             if (thread != null)
                 thread.mystop();
             this.finish();
+        }
+    }
+
+    public Bitmap resizeBitmap(Bitmap bitmap)
+    {
+        if(bitmap!=null)
+        {
+            int width = bitmap.getWidth();
+            int height = bitmap.getHeight();
+            float scaleWight = 0,scaleHeight = 0;
+            if (phoneW >= width) {
+                scaleWight = 1.0f;
+            }else {
+                scaleWight = phoneW / width;
+            }
+            if(phoneH >= height) {
+                scaleHeight = 1.0f;
+            }else{
+                scaleHeight = phoneH /height;
+            }
+            Matrix matrix = new Matrix();
+            matrix.postScale(scaleWight, scaleHeight);
+            Bitmap res = Bitmap.createBitmap(bitmap, 0,0,width, height, matrix, true);
+            return res;
+        }
+        else{
+            return null;
         }
     }
 
@@ -536,7 +574,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 left = 0;
             if (top < 0)
                 top = 0;
-            canvas.drawBitmap(bm, left, top, paint);
+            canvas.drawBitmap(resizeBitmap(bm), left, top, paint);
         } else {
             currFoucStatus = true;
             int picWidth = bmp.getWidth();

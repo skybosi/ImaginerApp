@@ -11,6 +11,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PointF;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.os.Bundle;
@@ -36,7 +37,7 @@ import java.util.Random;
 
 import android.graphics.Matrix;
 
-public class MainActivity extends Activity implements View.OnClickListener, View.OnLongClickListener, OnMenuItemClickListener {
+public class MainActivity extends Activity implements View.OnClickListener, View.OnLongClickListener, OnMenuItemClickListener, View.OnTouchListener {
     private String bmpFile = null;
     private Handler mHandler = null;
     private final static int REQUEST_CODE = 1;
@@ -72,7 +73,12 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private int currY = -1;
     private float phoneW = 0;
     private float phoneH = 0;
-
+    int mode = 0;
+    float distance = 0.0f;
+    float preDistance = 0.0f;
+    PointF mid = new PointF();//两指中点
+    Matrix oldmatrix = new Matrix();
+    Matrix newmatrix = new Matrix();
     //get surfaceview's location for the location on the picture
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
@@ -96,6 +102,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         ib.setOnClickListener(this);
         bt.setOnClickListener(this);
         bt.setOnLongClickListener(this);
+        sfv.setOnTouchListener(this);
         mHandler = new Handler() {
             @Override
             public void handleMessage(Message msg) {
@@ -339,24 +346,20 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                             isExit = false;
                         }
                         newPoint = imaginer.gotoNextPoint();
-                        if(newPoint[0] == 0 && newPoint[1]==0 && newPoint[1] == 0) {
+                        if (newPoint[0] == 0 && newPoint[1] == 0 && newPoint[2] == 0) {
                             Log.d(TAG, "get next point is finished!\n");
                             break;
                         }
-                        if (newPoint != null) {
-                            currX = newPoint[0];
-                            currY = newPoint[1];
-                            if (currFoucStatus) {//draw on the foucs picture
-                                newBmp = fullHere(currX, currY);
-                                if (newBmp != null) {
-                                    drawBmp(holder, newBmp);
-                                }
-                            } else {//draw on the src picture
-                                newBmp = getNext(currX, currY);
+                        currX = newPoint[0];
+                        currY = newPoint[1];
+                        if (currFoucStatus) {//draw on the foucs picture
+                            newBmp = fullHere(currX, currY);
+                            if (newBmp != null) {
                                 drawBmp(holder, newBmp);
                             }
-                        } else {
-                            Log.d(TAG, "MyThread run: gotoNextPoint error");
+                        } else {//draw on the src picture
+                            newBmp = getNext(currX, currY);
+                            drawBmp(holder, newBmp);
                         }
                     }
                     try {
@@ -395,42 +398,91 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         }
     }
 
-    // 实现onTouchEvent方法
-    public synchronized boolean onTouchEvent(MotionEvent event) {
-        // 如果是按下操作
-        switch (event.getAction()) {
+    /*获取两指之间的距离*/
+    private float getDistance(MotionEvent event) {
+        float x = event.getX(1) - event.getX(0);
+        float y = event.getY(1) - event.getY(0);
+        float distance = (float) Math.sqrt(x * x + y * y);//两点间的距离
+        return distance;
+    }
+
+    /*取两指的中心点坐标*/
+    public static PointF getMid(MotionEvent event) {
+        float midX = (event.getX(1) + event.getX(0)) / 2;
+        float midY = (event.getY(1) + event.getY(0)) / 2;
+        return new PointF(midX, midY);
+    }
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        switch (event.getAction() & MotionEvent.ACTION_MASK) {
+            //单个手指触摸
             case MotionEvent.ACTION_DOWN:
-                if (!currFoucStatus) {//at src picture
-                    if (bm != null) {
-                        Bitmap fullBmp = fullHere(currX, currY);
-                        if (fullBmp != null)
-                            drawBmp(holder, fullBmp);
-                    /*
-                    float touchX = event.getX();
-                    float touchY = event.getY();
-                    if (inPicture(touchX, touchY)) {
-                        startX = (int) touchX;
-                        startY = (int) touchY;
-                        isNewStart = true;
-                        isExit = false;
-                        nextSteps = 0;
-                        Bitmap fullBmp = fullHere(startX, startY);
-                        if (fullBmp != null)
-                            drawBmp(holder, fullBmp);
-                        //Toast.makeText(MainActivity.this, "X:" + touchX + " Y:" + touchY, Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(MainActivity.this, "onTouchEvent: Out oyf picture", Toast.LENGTH_SHORT).show();
-                        Log.d(TAG, "onTouchEvent: Out oyf picture");
-                    }*/
+                mode = 1;
+                break;
+            //两指触摸
+            case MotionEvent.ACTION_POINTER_DOWN:
+                preDistance = getDistance(event);
+                //当两指间距大于10时，计算两指中心点
+                if (preDistance > 10f) {
+                    mid = getMid(event);
+                    newmatrix.set(oldmatrix);
+                    mode = 2;
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                mode = 0;
+                break;
+            case MotionEvent.ACTION_POINTER_UP:
+                mode = 0;
+                break;
+            case MotionEvent.ACTION_MOVE:
+                //当两指缩放，计算缩放比例
+                if (mode == 2) {
+                    distance = getDistance(event);
+                    if (distance > 10f) {
+                        oldmatrix.set(newmatrix);
+                        float scale = distance / preDistance;
+                        oldmatrix.postScale(scale, scale, mid.x, mid.y);//缩放比例和中心点坐标
+                        Bitmap picNewRes = Bitmap.createBitmap(bm, 0, 0, bmpWidth, bmpHight, oldmatrix, true);
+                        drawBmp(holder,picNewRes);
                     }
-                } else {//at foucs picture
-                    nextSteps = 1;
+                }else//移动放大后的图片
+                {
+
                 }
                 break;
         }
-        return super.onTouchEvent(event);
+        return true;
     }
 
+    /*
+        // 实现onTouchEvent方法
+        public synchronized boolean onTouchEvent(MotionEvent event) {
+            // 如果是按下操作
+            float sx = -1, sy = -1;
+            float ex = -1, ey = -1;
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    //当手指按下的时候
+                    sx = event.getX();
+                    sy = event.getY();
+                    if (!currFoucStatus) {//at src picture
+                        if (bm != null) {
+                            Bitmap fullBmp = fullHere(currX, currY);
+                            if (fullBmp != null)
+                                drawBmp(holder, fullBmp);
+                        }
+                    } else {//at foucs picture
+                        nextSteps = 1;
+                    }
+                    break;
+                default:
+                    break;
+            }
+            return super.onTouchEvent(event);
+        }
+    */
     private Bitmap getNext(int x, int y) {
         int px = x; //来自真实图片的x，不需要矫正
         int py = y; //来自真实图片的y，不需要矫正
@@ -441,7 +493,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         Pixels pixels = new Pixels(px,py,pixelxy);
         */
         int pixelxy = bm.getPixel(px, py);
-        bm.setPixel(px, py, 0xFFFFFFFF-pixelxy);
+        bm.setPixel(px, py, 0xFFFFFFFF - pixelxy);
         return bm;
     }
 
@@ -468,7 +520,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             cy = 0;
         }
         int pixelxy = bm.getPixel(px, py);
-        bm.setPixel(px, py, 0xFFFFFFFF-pixelxy);
+        bm.setPixel(px, py, 0xFFFFFFFF - pixelxy);
         //Log.i(TAG, "fullHere: createBitmap error" + pixelxy);
         Matrix matrix = new Matrix();
         // 缩放图片动作
@@ -477,7 +529,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         Bitmap picNewRes = null;
         // 新得到的图片是原图片经过变换填充到整个屏幕的图片
         try {
-            picNewRes = Bitmap.createBitmap(bm, cx, cy, newScale, newScale, matrix, true);
+            picNewRes = Bitmap.createBitmap(bm, 0, 0, bmpWidth, bmpHight, oldmatrix, true);
+            //picNewRes = Bitmap.createBitmap(bm, cx, cy, newScale, newScale, matrix, true);
         } catch (Exception e) {
             Log.e(TAG, "fullHere: createBitmap error" + e.toString());
         } finally {
@@ -506,7 +559,6 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             cleanScreen();
             drawBmp(holder, bm);
             isBack = true;
-            nextSteps = 0;
         } else {
             exit();
         }
@@ -525,29 +577,27 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         }
     }
 
-    public Bitmap resizeBitmap(Bitmap bitmap)
-    {
-        if(bitmap!=null)
-        {
+
+    public Bitmap resizeBitmap(Bitmap bitmap) {
+        if (bitmap != null) {
             int width = bitmap.getWidth();
             int height = bitmap.getHeight();
-            float scaleWight = 0,scaleHeight = 0;
+            float scaleWight = 0, scaleHeight = 0;
             if (phoneW >= width) {
                 scaleWight = 1.0f;
-            }else {
+            } else {
                 scaleWight = phoneW / width;
             }
-            if(phoneH >= height) {
+            if (phoneH >= height) {
                 scaleHeight = 1.0f;
-            }else{
-                scaleHeight = phoneH /height;
+            } else {
+                scaleHeight = phoneH / height;
             }
             Matrix matrix = new Matrix();
             matrix.postScale(scaleWight, scaleHeight);
-            Bitmap res = Bitmap.createBitmap(bitmap, 0,0,width, height, matrix, true);
+            Bitmap res = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true);
             return res;
-        }
-        else{
+        } else {
             return null;
         }
     }

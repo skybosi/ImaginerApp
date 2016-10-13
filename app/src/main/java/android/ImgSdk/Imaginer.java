@@ -84,7 +84,6 @@ public final class Imaginer {
     }
 
     public int getStartY() {
-        curY++;
         return (int)((boundrys[0][0] & 0x1FFFFFFFCL) >> 2);
     }
 

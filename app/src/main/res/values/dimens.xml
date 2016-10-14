@@ -5,4 +5,5 @@
     <dimen name="pngdimen">21dp</dimen>
     <dimen name="filenameSize">20dp</dimen>
     <dimen name="filenumSize">13dp</dimen>
+    <dimen name="magin">5dp</dimen>
 </resources>

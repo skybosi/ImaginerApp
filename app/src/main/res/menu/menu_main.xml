@@ -7,6 +7,8 @@
         android:title="@string/app_settings"
         app:showAsAction="never">
         <menu>
+            <item android:id="@+id/setColor"
+                android:title="set color"/>
             <item android:id="@+id/nextSpeed"
                 android:title="set next Speed"/>
             <item android:id="@+id/other"

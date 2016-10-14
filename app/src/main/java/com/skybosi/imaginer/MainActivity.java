@@ -3,6 +3,7 @@ package com.skybosi.imaginer;
 import android.ImgSdk.Imaginer;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -19,6 +20,7 @@ import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.Toolbar.OnMenuItemClickListener;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -28,6 +30,8 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.os.Handler;
@@ -51,7 +55,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private String TAG = "IMAGINER";
     private static boolean isExit = false;
     private SurfaceHolder holder = null;
-    private int resetColor = Color.RED;
+    private int resColor = 0;
+    private int resetColor = 0;
     private Canvas canvas = null;
     private Paint paint = null;
     private int nextSteps = 0;
@@ -69,7 +74,6 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private int currY = -1;
     private float phoneW = 0;
     private float phoneH = 0;
-    private int mode = 0;
     private float distance = 0.0f;
     private float preDistance = 0.0f;
     private PointF mid = new PointF();//两指中点
@@ -81,7 +85,11 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private float lastY = -1;
     private float picleft = -1;
     private float pictop = -1;
-
+    private LinearLayout layout = null;
+    private static final int NONE = 0;
+    private static final int DRAG = 1;
+    private static final int ZOOM = 2;
+    private int mode = NONE;
     //get surfaceview's location for the location on the picture
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
@@ -118,6 +126,12 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                         break;
                     case 2:
                         isExit = false;
+                    case 3:
+                        Toast.makeText(MainActivity.this, "Get boundry is OK", Toast.LENGTH_SHORT).show();
+                        break;
+                    case 4:
+                        Toast.makeText(MainActivity.this, "Get boundry is finish", Toast.LENGTH_SHORT).show();
+                        break;
                     default:
                         break;
                 }
@@ -288,6 +302,50 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 nextSpeedbuilder.show();
                 //setNextSpeed(nextSpeeds);
                 break;
+            case R.id.setColor:
+                // 1. 布局文件转换为View对象
+                LayoutInflater inflater = LayoutInflater.from(this);
+                final LinearLayout layout = (LinearLayout) inflater.inflate(R.layout.color_select, null);
+                // 2. 新建对话框对象
+                final Dialog dialog = new AlertDialog.Builder(MainActivity.this).create();
+                dialog.setCancelable(false);
+                dialog.show();
+                dialog.getWindow().setContentView(layout);
+                SeekBar seekBar = (SeekBar) layout.findViewById(R.id.colorCtrl);
+                seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                    @Override
+                    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                        Button colotbt = (Button) layout.findViewById(R.id.colorShow);
+                        colotbt.setBackgroundColor(0xFF000000 | progress);
+                        resColor = progress;
+                    }
+                    @Override
+                    public void onStartTrackingTouch(SeekBar seekBar) {
+                    }
+                    @Override
+                    public void onStopTrackingTouch(SeekBar seekBar) {
+                    }
+                });
+                // 3. 确定按钮
+                Button btnOK = (Button) layout.findViewById(R.id.yes);
+                btnOK.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        resetColor = resColor;
+                        //Toast.makeText(getApplicationContext(), "ok", Toast.LENGTH_SHORT).show();
+                        dialog.dismiss();
+                    }
+                });
+                // 4. 取消按钮
+                Button btnCancel = (Button) layout.findViewById(R.id.no);
+                btnCancel.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        //Toast.makeText(getApplicationContext(), "cancel", Toast.LENGTH_SHORT).show();
+                        dialog.dismiss();
+                    }
+                });
+                break;
             default:
                 break;
         }
@@ -308,6 +366,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             Bitmap newBmp;
             int[] newPoint = null;
             if (imaginer != null && imaginer.init()) {
+                mHandler.sendEmptyMessage(3);
                 Log.d(TAG, "MyThread run: init Cbitmap finish");
                 imaginer.JgetBoundrys();
                 startX = imaginer.getStartX();
@@ -316,6 +375,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                     if (nextSteps-- > 0 ) {
                         newPoint = imaginer.gotoNextPoint();
                         if (newPoint[0] == 0 && newPoint[1] == 0 && newPoint[2] == 0) {
+                            mHandler.sendEmptyMessage(4);
                             Log.d(TAG, "get next point is finished!\n");
                             break;
                         }
@@ -402,7 +462,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             case MotionEvent.ACTION_DOWN:
                 float sx = lastX  = event.getRawX();
                 float sy = lastY  = event.getRawY();
-                mode = 1;
+                mode = DRAG;
                 /*
                 if(imaginer != null) {
                     if(nextSteps <= 1)
@@ -416,20 +476,20 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 if (preDistance > 10f) {
                     mid = getMid(event);
                     newmatrix.set(oldmatrix);
-                    mode = 2;
+                    mode = ZOOM;
                 }
                 break;
             case MotionEvent.ACTION_UP:
-                mode = 0;
+                mode = NONE;
                 break;
             case MotionEvent.ACTION_POINTER_UP:
-                mode = 0;
+                mode = NONE;
                 break;
-            case MotionEvent.ACTION_MOVE:
+        case MotionEvent.ACTION_MOVE:
                 //当两指缩放，计算缩放比例
                 if(bm == null)
                     break;
-                if (mode == 2) {
+                if (mode == ZOOM) {
                     distance = getDistance(event);
                     if (distance > 10f) {
                         oldmatrix.set(newmatrix);
@@ -444,23 +504,9 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                         else {
                             Log.e(TAG, "Ontouch()" + scale);
                         }
-                    }/*else //双指拖动效果不佳
-                    {
-                        float ex = (event.getX(1) + event.getX(0)) / 2;
-                        float ey = (event.getY(1) + event.getY(0)) / 2;
-                        ex -= lastX;
-                        ey -= lastY;
-                        if (ex >= 10 || ey >= 10 || ex <= -10 || ey <= -10) {
-                            oldmatrix.postTranslate(ex, ey);
-                            Bitmap picNewRes2 = Bitmap.createBitmap(bm, 0, 0, bmpWidth, bmpHight, oldmatrix, true);
-                            drawBmp(holder, picNewRes2,ex,ey);
-                            lastX = event.getRawX();
-                            lastY = event.getRawY();
-                        }
-                    }*/
+                    }
                 }
-                if(event.getPointerCount() == 1 )//else//移动放大后的图片
-                {
+                if (mode == DRAG) {
                     float ex = event.getRawX();
                     float ey = event.getRawY();
                      ex -= lastX;
@@ -481,7 +527,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private Bitmap highlight(Bitmap bitmap,int x, int y) {
         isBack = false;
         int pixelxy = bitmap.getPixel(x, y);
-        bitmap.setPixel(x, y, 0xFFFFFFFF - pixelxy);
+        bitmap.setPixel(x, y, resetColor);
         Bitmap picNewRes = null;
         // 新得到的图片是原图片经过变换填充到整个屏幕的图片
         try {

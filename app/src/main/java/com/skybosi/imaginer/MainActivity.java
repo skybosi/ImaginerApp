@@ -15,6 +15,7 @@ import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.Toolbar.OnMenuItemClickListener;
@@ -55,7 +56,10 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private String TAG = "IMAGINER";
     private static boolean isExit = false;
     private SurfaceHolder holder = null;
-    private int resColor = 0;
+    private int ColorA = 0xFF000000;
+    private int ColorR = 0;
+    private int ColorG = 0;
+    private int ColorB = 0;
     private int resetColor = 0;
     private Canvas canvas = null;
     private Paint paint = null;
@@ -311,13 +315,57 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 dialog.setCancelable(false);
                 dialog.show();
                 dialog.getWindow().setContentView(layout);
-                SeekBar seekBar = (SeekBar) layout.findViewById(R.id.colorCtrl);
-                seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                View vr = (View)layout.findViewById(R.id.colorCtrlR);
+                SeekBar seekBarR = (SeekBar) vr.findViewById(R.id.seek);
+                TextView tr = (TextView)vr.findViewById(R.id.text);
+                tr.setText("R:");
+                //SeekBar seekBarR = (SeekBar) layout.findViewById(R.id.colorCtrlR);
+                seekBarR.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                     @Override
                     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                         Button colotbt = (Button) layout.findViewById(R.id.colorShow);
-                        colotbt.setBackgroundColor(0xFF000000 | progress);
-                        resColor = progress;
+                        ColorR = (progress << 16);
+                        colotbt.setBackgroundColor(ColorA | ColorR | ColorG | ColorB);
+                    }
+
+                    @Override
+                    public void onStartTrackingTouch(SeekBar seekBar) {
+                    }
+
+                    @Override
+                    public void onStopTrackingTouch(SeekBar seekBar) {
+                    }
+                });
+                View vg = (View)layout.findViewById(R.id.colorCtrlG);
+                SeekBar seekBarG = (SeekBar) vg.findViewById(R.id.seek);
+                TextView tg = (TextView)vg.findViewById(R.id.text);
+                tg.setText("G:");
+                //SeekBar seekBarG = (SeekBar) layout.findViewById(R.id.colorCtrlG);
+                seekBarG.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                    @Override
+                    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                        Button colotbt = (Button) layout.findViewById(R.id.colorShow);
+                        ColorG = (progress << 8);
+                        colotbt.setBackgroundColor(ColorA | ColorR | ColorG | ColorB );
+                    }
+                    @Override
+                    public void onStartTrackingTouch(SeekBar seekBar) {
+                    }
+                    @Override
+                    public void onStopTrackingTouch(SeekBar seekBar) {
+                    }
+                });
+                View vb = (View)layout.findViewById(R.id.colorCtrlB);
+                SeekBar seekBarB = (SeekBar) vb.findViewById(R.id.seek);
+                TextView tb = (TextView)vb.findViewById(R.id.text);
+                tb.setText("B:");
+                //SeekBar seekBarB = (SeekBar) layout.findViewById(R.id.colorCtrlB);
+                seekBarB.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                    @Override
+                    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                        Button colotbt = (Button) layout.findViewById(R.id.colorShow);
+                        ColorB = progress;
+                        colotbt.setBackgroundColor(ColorA | ColorR | ColorG | ColorB );
                     }
                     @Override
                     public void onStartTrackingTouch(SeekBar seekBar) {
@@ -331,7 +379,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 btnOK.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        resetColor = resColor;
+                        resetColor = ColorA| ColorR | ColorG | ColorB;
                         //Toast.makeText(getApplicationContext(), "ok", Toast.LENGTH_SHORT).show();
                         dialog.dismiss();
                     }

@@ -1,48 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="100dp"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:weightSum="1"
-    android:padding="@dimen/magin">
-
+    android:padding="@dimen/magin"
+    android:weightSum="1">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="0.5"
-        android:weightSum="1"
+        android:layout_margin="@dimen/magin"
+        android:layout_weight="0.7"
+        android:layout_gravity="center"
         android:orientation="horizontal"
-        android:layout_margin="@dimen/magin">
-
-        <SeekBar
-            android:id="@+id/colorCtrl"
+        android:weightSum="1">
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:max="0xFFFFFF"
+            android:layout_margin="@dimen/magin"
             android:layout_weight="0.8"
-            android:progress="0" />
+            android:orientation="vertical"
+            android:weightSum="1"
+            android:layout_marginBottom="10dp"
+            android:layout_gravity="center_vertical">
+            <!--<include-->
+                <!--android:id="@+id/colorCtrlA"-->
+                <!--layout="@layout/seekbar"/>-->
+            <include
+                android:id="@+id/colorCtrlR"
+                layout="@layout/seekbar"/>
+            <include
+                android:id="@+id/colorCtrlG"
+                layout="@layout/seekbar"/>
+            <include
+                android:id="@+id/colorCtrlB"
+                layout="@layout/seekbar"/>
+            <!--<SeekBar-->
+                <!--android:id="@+id/colorCtrlR"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="match_parent"-->
+                <!--android:max="0xFF"-->
+                <!--android:padding="@dimen/magin"-->
+                <!--android:progress="0" />-->
+            <!--<SeekBar-->
+                <!--android:id="@+id/colorCtrlG"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="match_parent"-->
+                <!--android:max="0xFF"-->
+                <!--android:padding="@dimen/magin"-->
+                <!--android:progress="0" />-->
+            <!--<SeekBar-->
+                <!--android:id="@+id/colorCtrlB"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="match_parent"-->
+                <!--android:max="0xFF"-->
+                <!--android:padding="@dimen/magin"-->
+                <!--android:progress="0" />-->
+        </LinearLayout>
         <Button
             android:id="@+id/colorShow"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.2"
-            android:background="@drawable/shape" />
+            android:background="@drawable/shape"
+            android:layout_gravity="center_vertical" />
     </LinearLayout>
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_margin="@dimen/magin"
+        android:layout_weight="0.3"
         android:orientation="horizontal"
-        android:layout_weight="0.5"
-        android:weightSum="1"
-        android:layout_margin="@dimen/magin">
+        android:weightSum="1">
         <Button
             android:id="@+id/yes"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
-            android:text="确定"/>
+            android:text="确定" />
         <Button
             android:id="@+id/no"
             android:layout_width="wrap_content"

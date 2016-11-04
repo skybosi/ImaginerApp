@@ -87,6 +87,10 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private Bitmap bmp2finger = null;
     private float lastX = -1;
     private float lastY = -1;
+    private int clickcount = 0;
+    private long firstClick = 0;
+    private long secondClick = 0;
+    private boolean lockDRAG = false;
     private float picleft = -1;
     private float pictop = -1;
     private LinearLayout layout = null;
@@ -94,6 +98,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private static final int DRAG = 1;
     private static final int ZOOM = 2;
     private int mode = NONE;
+
     //get surfaceview's location for the location on the picture
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
@@ -307,6 +312,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 //setNextSpeed(nextSpeeds);
                 break;
             case R.id.setColor:
+                resetColor = Color.WHITE;
                 // 1. 布局文件转换为View对象
                 LayoutInflater inflater = LayoutInflater.from(this);
                 final LinearLayout layout = (LinearLayout) inflater.inflate(R.layout.color_select, null);
@@ -315,9 +321,9 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 dialog.setCancelable(false);
                 dialog.show();
                 dialog.getWindow().setContentView(layout);
-                View vr = (View)layout.findViewById(R.id.colorCtrlR);
+                View vr = (View) layout.findViewById(R.id.colorCtrlR);
                 SeekBar seekBarR = (SeekBar) vr.findViewById(R.id.seek);
-                TextView tr = (TextView)vr.findViewById(R.id.text);
+                TextView tr = (TextView) vr.findViewById(R.id.text);
                 tr.setText("R:");
                 //SeekBar seekBarR = (SeekBar) layout.findViewById(R.id.colorCtrlR);
                 seekBarR.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -336,9 +342,9 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                     public void onStopTrackingTouch(SeekBar seekBar) {
                     }
                 });
-                View vg = (View)layout.findViewById(R.id.colorCtrlG);
+                View vg = (View) layout.findViewById(R.id.colorCtrlG);
                 SeekBar seekBarG = (SeekBar) vg.findViewById(R.id.seek);
-                TextView tg = (TextView)vg.findViewById(R.id.text);
+                TextView tg = (TextView) vg.findViewById(R.id.text);
                 tg.setText("G:");
                 //SeekBar seekBarG = (SeekBar) layout.findViewById(R.id.colorCtrlG);
                 seekBarG.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -346,18 +352,20 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                         Button colotbt = (Button) layout.findViewById(R.id.colorShow);
                         ColorG = (progress << 8);
-                        colotbt.setBackgroundColor(ColorA | ColorR | ColorG | ColorB );
+                        colotbt.setBackgroundColor(ColorA | ColorR | ColorG | ColorB);
                     }
+
                     @Override
                     public void onStartTrackingTouch(SeekBar seekBar) {
                     }
+
                     @Override
                     public void onStopTrackingTouch(SeekBar seekBar) {
                     }
                 });
-                View vb = (View)layout.findViewById(R.id.colorCtrlB);
+                View vb = (View) layout.findViewById(R.id.colorCtrlB);
                 SeekBar seekBarB = (SeekBar) vb.findViewById(R.id.seek);
-                TextView tb = (TextView)vb.findViewById(R.id.text);
+                TextView tb = (TextView) vb.findViewById(R.id.text);
                 tb.setText("B:");
                 //SeekBar seekBarB = (SeekBar) layout.findViewById(R.id.colorCtrlB);
                 seekBarB.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -365,11 +373,13 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                         Button colotbt = (Button) layout.findViewById(R.id.colorShow);
                         ColorB = progress;
-                        colotbt.setBackgroundColor(ColorA | ColorR | ColorG | ColorB );
+                        colotbt.setBackgroundColor(ColorA | ColorR | ColorG | ColorB);
                     }
+
                     @Override
                     public void onStartTrackingTouch(SeekBar seekBar) {
                     }
+
                     @Override
                     public void onStopTrackingTouch(SeekBar seekBar) {
                     }
@@ -379,7 +389,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 btnOK.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        resetColor = ColorA| ColorR | ColorG | ColorB;
+                        resetColor = ColorA | ColorR | ColorG | ColorB;
+                        //ColorA = ColorR = ColorG = ColorB = 0;
                         //Toast.makeText(getApplicationContext(), "ok", Toast.LENGTH_SHORT).show();
                         dialog.dismiss();
                     }
@@ -403,6 +414,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     class MyThread extends Thread {
         SurfaceHolder holder;
         private boolean refresh = true;
+
         public MyThread(SurfaceHolder holder) {
             this.holder = holder;
         }
@@ -420,7 +432,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 startX = imaginer.getStartX();
                 startY = imaginer.getStartY();
                 while (refresh) {
-                    if (nextSteps-- > 0 ) {
+                    if (nextSteps-- > 0) {
                         newPoint = imaginer.gotoNextPoint();
                         if (newPoint[0] == 0 && newPoint[1] == 0 && newPoint[2] == 0) {
                             mHandler.sendEmptyMessage(4);
@@ -430,11 +442,11 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                         currX = newPoint[0];
                         currY = newPoint[1];
                         newBmp = highlight(bm, currX, currY);
-                        if(newBmp != null)
-                            drawBmp(holder, newBmp,0,0);
+                        if (newBmp != null)
+                            drawBmp(holder, newBmp, 0, 0);
                     }
                     try {
-                        Thread.sleep(nextSpeeds/10);
+                        Thread.sleep(nextSpeeds / 10);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -508,9 +520,27 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
             //单个手指触摸
             case MotionEvent.ACTION_DOWN:
-                float sx = lastX  = event.getRawX();
-                float sy = lastY  = event.getRawY();
+                float sx = lastX = event.getRawX();
+                float sy = lastY = event.getRawY();
                 mode = DRAG;
+                clickcount++;
+                if (clickcount == 1) {
+                    firstClick = System.currentTimeMillis();
+                } else if (mode != ZOOM && clickcount == 2) {
+                    secondClick = System.currentTimeMillis();
+                    if (secondClick - firstClick < 1000) {
+                        if (lockDRAG) {
+                            lockDRAG = false;
+                            toolbar.setLogo(R.mipmap.imaginer);
+                        } else {
+                            lockDRAG = true;
+                            toolbar.setLogo(R.mipmap.imaginerlock);
+                        }
+                    }
+                    clickcount = 0;
+                    firstClick = 0;
+                    secondClick = 0;
+                }
                 /*
                 if(imaginer != null) {
                     if(nextSteps <= 1)
@@ -533,38 +563,52 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             case MotionEvent.ACTION_POINTER_UP:
                 mode = NONE;
                 break;
-        case MotionEvent.ACTION_MOVE:
+            case MotionEvent.ACTION_MOVE:
                 //当两指缩放，计算缩放比例
-                if(bm == null)
+                if (bm == null)
                     break;
                 if (mode == ZOOM) {
                     distance = getDistance(event);
                     if (distance > 10f) {
                         oldmatrix.set(newmatrix);
                         float scale = distance / preDistance;
-                        scale2finger = scale;
-                        oldmatrix.postScale(scale, scale, mid.x, mid.y);//缩放比例和中心点坐标
-                        Bitmap picNewRes = Bitmap.createBitmap(bm, 0, 0, bmpWidth, bmpHight, oldmatrix, true);
-                        if(picNewRes != null) {
-                            //Bitmap picNewRes = createBitmap(bm,scale2finger,scale2finger);
-                            drawBmp(holder, picNewRes,0,0);
-                        }
-                        else {
-                            Log.e(TAG, "Ontouch()" + scale);
+                        if (scale > 0.01) {
+                            scale2finger = scale;
+                            oldmatrix.postScale(scale, scale, mid.x, mid.y);//缩放比例和中心点坐标
+                            try {
+                                Bitmap picNewRes = Bitmap.createBitmap(bm, 0, 0, bmpWidth, bmpHight, oldmatrix, true);
+                                if (picNewRes != null) {
+                                    //Bitmap picNewRes = createBitmap(bm,scale2finger,scale2finger);
+                                    drawBmp(holder, picNewRes, 0, 0);
+                                } else {
+                                    Log.e(TAG, "Ontouch()" + scale);
+                                }
+                            } catch (Exception e) {
+                                Log.e(TAG, "scale:" + e.toString() + scale);
+                            }
                         }
                     }
                 }
                 if (mode == DRAG) {
-                    float ex = event.getRawX();
-                    float ey = event.getRawY();
-                     ex -= lastX;
-                     ey -= lastY;
-                    if (ex >= 10 || ey >= 10 || ex <= -10 || ey <= -10) {
-                        oldmatrix.postTranslate(ex, ey);
-                        Bitmap picNewRes2 = Bitmap.createBitmap(bm, 0, 0, bmpWidth, bmpHight, oldmatrix, true);
-                        drawBmp(holder, picNewRes2,ex,ey);
-                        lastX = event.getRawX();
-                        lastY = event.getRawY();
+                    if (lockDRAG) {//
+                        float ex = event.getRawX();
+                        float ey = event.getRawY();
+                        ex -= lastX;
+                        ey -= lastY;
+                        String point = "(" + ex + ", " + ey + ")";
+                        //Toast.makeText(getApplicationContext(), "图片移动被锁！拖动" + point, Toast.LENGTH_SHORT).show();
+                    } else {
+                        float ex = event.getRawX();
+                        float ey = event.getRawY();
+                        ex -= lastX;
+                        ey -= lastY;
+                        if (ex >= 10 || ey >= 10 || ex <= -10 || ey <= -10) {
+                            oldmatrix.postTranslate(ex, ey);
+                            Bitmap picNewRes2 = Bitmap.createBitmap(bm, 0, 0, bmpWidth, bmpHight, oldmatrix, true);
+                            drawBmp(holder, picNewRes2, ex, ey);
+                            lastX = event.getRawX();
+                            lastY = event.getRawY();
+                        }
                     }
                 }
                 break;
@@ -572,7 +616,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         return true;
     }
 
-    private Bitmap highlight(Bitmap bitmap,int x, int y) {
+    private Bitmap highlight(Bitmap bitmap, int x, int y) {
         isBack = false;
         int pixelxy = bitmap.getPixel(x, y);
         bitmap.setPixel(x, y, resetColor);
@@ -665,7 +709,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         } else {
             int picWidth = bmp.getWidth();
             int picHight = bmp.getHeight();
-            if (picleft == -1 && pictop == -1 &&  x == 0 && y == 0) {
+            if (picleft == -1 && pictop == -1 && x == 0 && y == 0) {
                 picleft = (canvsWidth - picWidth) / 2;
                 pictop = (canvsHight - picHight) / 2;
                 if (picleft < 0)

@@ -12,6 +12,7 @@
         android:layout_weight="0.08"
         android:background="?attr/colorPrimary"
         android:popupTheme="@style/AppTheme">
+
         <TextView
             android:id="@+id/toolbar_title"
             android:layout_width="wrap_content"
@@ -36,7 +37,7 @@
             android:id="@+id/surface"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="0.9"/>
+            android:layout_weight="0.9" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -53,14 +54,20 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="0.45"
                 android:text="next" />
-
+            <!--<include-->
+                <!--android:id="@+id/animmenu"-->
+                <!--layout="@layout/anim_menu"-->
+                <!--android:layout_width="0dp"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_margin="5dp"-->
+                <!--android:layout_weight="0.1" />-->
             <ImageButton
                 android:id="@+id/openSD"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_margin="5dp"
                 android:layout_weight="0.1"
-                android:background="@drawable/openfile"></ImageButton>
+                android:background="@drawable/openfile"/>
         </LinearLayout>
     </LinearLayout>
 

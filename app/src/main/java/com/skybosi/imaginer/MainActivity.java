@@ -15,7 +15,6 @@ import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.Toolbar.OnMenuItemClickListener;
@@ -32,14 +31,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.os.Handler;
 import android.os.Message;
-
-import java.util.Random;
-
 import android.graphics.Matrix;
 
 public class MainActivity extends Activity implements View.OnClickListener, View.OnLongClickListener, OnMenuItemClickListener, View.OnTouchListener {
@@ -116,13 +113,17 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         toolbar.setLogo(R.mipmap.imaginer);
         toolbar.setOnMenuItemClickListener(this);
         sfv = (SurfaceView) findViewById(R.id.surface);
+        //RelativeLayout animLayout = (RelativeLayout)findViewById(R.id.animmenu);
+        //Button ib  = (Button)animLayout.findViewById(R.id.openfile);
         ImageButton ib = (ImageButton) findViewById(R.id.openSD);
         Button bt = (Button) findViewById(R.id.nextPoint);
         isExit = false;
+        //animLayout.setOnClickListener(this);
         ib.setOnClickListener(this);
         bt.setOnClickListener(this);
         bt.setOnLongClickListener(this);
         sfv.setOnTouchListener(this);
+        toolbar.setOnClickListener(this);
         mHandler = new Handler() {
             @Override
             public void handleMessage(Message msg) {
@@ -180,15 +181,42 @@ public class MainActivity extends Activity implements View.OnClickListener, View
 
     @Override
     public void onClick(View v) {
-        if (v.getId() == R.id.openSD) {
-            nextSteps = 1;
-            loadFile();
-        } else if (v.getId() == R.id.nextPoint) {
-            if (tmpSteps <= 1)
+        switch (v.getId()) {
+            //case R.id.animmenu:
+            //    break;
+            case R.id.openSD:
                 nextSteps = 1;
-            else {
-                nextSteps = tmpSteps;
-            }
+                loadFile();
+                break;
+            case R.id.nextPoint:
+                if (tmpSteps <= 1)
+                    nextSteps = 1;
+                else {
+                    nextSteps = tmpSteps;
+                }
+                break;
+            case R.id.toolbar:
+                if (bm != null) {
+                    clickcount++;
+                    if (clickcount == 1) {
+                        firstClick = System.currentTimeMillis();
+                    } else if (clickcount == 2) {
+                        secondClick = System.currentTimeMillis();
+                        if (secondClick - firstClick < 1000) {
+                            if (lockDRAG) {
+                                lockDRAG = false;
+                                toolbar.setLogo(R.mipmap.imaginer);
+                            } else {
+                                lockDRAG = true;
+                                toolbar.setLogo(R.mipmap.imaginerlock);
+                            }
+                        }
+                        clickcount = 0;
+                        firstClick = 0;
+                        secondClick = 0;
+                    }
+                }
+                break;
         }
     }
 
@@ -523,24 +551,6 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 float sx = lastX = event.getRawX();
                 float sy = lastY = event.getRawY();
                 mode = DRAG;
-                clickcount++;
-                if (clickcount == 1) {
-                    firstClick = System.currentTimeMillis();
-                } else if (mode != ZOOM && clickcount == 2) {
-                    secondClick = System.currentTimeMillis();
-                    if (secondClick - firstClick < 1000) {
-                        if (lockDRAG) {
-                            lockDRAG = false;
-                            toolbar.setLogo(R.mipmap.imaginer);
-                        } else {
-                            lockDRAG = true;
-                            toolbar.setLogo(R.mipmap.imaginerlock);
-                        }
-                    }
-                    clickcount = 0;
-                    firstClick = 0;
-                    secondClick = 0;
-                }
                 /*
                 if(imaginer != null) {
                     if(nextSteps <= 1)

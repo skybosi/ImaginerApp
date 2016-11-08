@@ -40,41 +40,46 @@ import android.os.Message;
 import android.graphics.Matrix;
 
 public class MainActivity extends Activity implements View.OnClickListener, View.OnLongClickListener, OnMenuItemClickListener, View.OnTouchListener {
-    private String bmpFile = null;
+    //for send message
     private Handler mHandler = null;
+    //for save the image
     private final static int REQUEST_CODE = 1;
-    private int canvsHight = 0;
-    private int canvsWidth = 0;
+    private String bmpFile = null;
+    private Bitmap bm = null;
     private int bmpHight = 0;
     private int bmpWidth = 0;
-    private Bitmap bm = null;
-    //private Canvas canvas = null;
-    private int nextSpeeds = 200;//ms
+    private int curWitdth = 0;
+    private int curHeight = 0;
+    //for log and exit
     private String TAG = "IMAGINER";
     private static boolean isExit = false;
+    //for show image at surfaceview
     private SurfaceHolder holder = null;
+    private SurfaceView sfv = null;
+    private Canvas canvas = null;
+    private Paint paint = null;
+    private int canvsHight = 0;
+    private int canvsWidth = 0;
+    //for highlight the boundary
+    private Imaginer imaginer = null;
+    private int nextSteps = 0;
+    private int tmpSteps = 1;
+    private int startX = -1;
+    private int startY = -1;
+    private int returnValue = -1;
+    private int nextSpeeds = 200;//ms
+    //for set color at toolbar
+    private Toolbar toolbar = null;
     private int ColorA = 0xFF000000;
     private int ColorR = 0;
     private int ColorG = 0;
     private int ColorB = 0;
     private int resetColor = 0;
-    private Canvas canvas = null;
-    private Paint paint = null;
-    private int nextSteps = 0;
-    private int tmpSteps = 1;
-    private int startX = -1;
-    private int startY = -1;
-    private boolean isNewStart = false;
     private boolean isBack = false;
-    private int[] location = new int[2];
-    private SurfaceView sfv = null;
-    private Toolbar toolbar = null;
-    private int returnValue = -1;
-    private Imaginer imaginer = null;
-    private int currX = -1;
-    private int currY = -1;
+    //for show a image at center
     private float phoneW = 0;
     private float phoneH = 0;
+    //for zoom and drag
     private float distance = 0.0f;
     private float preDistance = 0.0f;
     private PointF mid = new PointF();//两指中点
@@ -84,18 +89,21 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private Bitmap bmp2finger = null;
     private float lastX = -1;
     private float lastY = -1;
-    private int clickcount = 0;
-    private long firstClick = 0;
-    private long secondClick = 0;
-    private boolean lockDRAG = false;
-    private float picleft = -1;
-    private float pictop = -1;
-    private LinearLayout layout = null;
+    private int currX = -1;
+    private int currY = -1;
     private static final int NONE = 0;
     private static final int DRAG = 1;
     private static final int ZOOM = 2;
     private int mode = NONE;
-
+    //for lock the image
+    private int clickcount = 0;
+    private long firstClick = 0;
+    private long secondClick = 0;
+    private boolean lockDRAG = false;
+    //for make image at position
+    private float picleft = -1;
+    private float pictop = -1;
+    private int[] location = new int[2];
     //get surfaceview's location for the location on the picture
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
@@ -142,6 +150,9 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                     case 4:
                         Toast.makeText(MainActivity.this, "Get boundry is finish", Toast.LENGTH_SHORT).show();
                         break;
+                    case 5:
+                        Toast.makeText(MainActivity.this, "Get boundry is fair", Toast.LENGTH_SHORT).show();
+                        break;
                     default:
                         break;
                 }
@@ -187,6 +198,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             case R.id.openSD:
                 nextSteps = 1;
                 loadFile();
+                lockDRAG = false;
+                toolbar.setLogo(R.mipmap.imaginer);
                 break;
             case R.id.nextPoint:
                 if (tmpSteps <= 1)
@@ -266,10 +279,22 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         return false;
     }
 
+    void clearAll()
+    {
+        newmatrix.reset();
+        oldmatrix.reset();
+        lastX = lastY = 0;
+        scale2finger = 1.0f;
+        distance = preDistance = 0;
+        mid.set(0, 0);
+    }
     //init the picture that will be deal with
     private void init_bmp() {
-        if (bm != null)
+        if (bm != null) {
             bm.recycle();
+            System.gc();
+            clearAll();
+        }
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inMutable = true;//set Mutable,so can setpixel
         bm = BitmapFactory.decodeFile(bmpFile, options);
@@ -433,6 +458,26 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                     }
                 });
                 break;
+            case R.id.cut:
+                if(imaginer != null) {
+                    int[] cutedImag = imaginer.cutAll(-1, -1);
+                    if (cutedImag != null) {
+                        Bitmap.Config config = bm.getConfig();
+                        Bitmap move = Bitmap.createBitmap(cutedImag, bmpWidth, bmpHight, config);
+                        Bitmap picNewRes2 = Bitmap.createBitmap(move, 0, 0, bmpWidth, bmpHight, oldmatrix, true);
+                        drawBmp(holder, picNewRes2, 0, 0);
+                        if(move != null && !move.isRecycled()){
+                            move.recycle();
+                            move = null;
+                        }
+                        if(picNewRes2 != null && !picNewRes2.isRecycled()){
+                            picNewRes2.recycle();
+                            picNewRes2 = null;
+                        }
+                        System.gc();
+                    }
+                }
+                break;
             default:
                 break;
         }
@@ -454,30 +499,36 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             Bitmap newBmp;
             int[] newPoint = null;
             if (imaginer != null && imaginer.init()) {
-                mHandler.sendEmptyMessage(3);
                 Log.d(TAG, "MyThread run: init Cbitmap finish");
-                imaginer.JgetBoundrys();
-                startX = imaginer.getStartX();
-                startY = imaginer.getStartY();
-                while (refresh) {
-                    if (nextSteps-- > 0) {
-                        newPoint = imaginer.gotoNextPoint();
-                        if (newPoint[0] == 0 && newPoint[1] == 0 && newPoint[2] == 0) {
-                            mHandler.sendEmptyMessage(4);
-                            Log.d(TAG, "get next point is finished!\n");
-                            break;
+                if(imaginer.JgetBoundrys()) {
+                    mHandler.sendEmptyMessage(3);
+                    startX = imaginer.getStartX();
+                    startY = imaginer.getStartY();
+                    while (refresh) {
+                        if (nextSteps-- > 0) {
+                            newPoint = imaginer.gotoNextPoint();
+                            if (newPoint[0] == 0 && newPoint[1] == 0 && newPoint[2] == 0) {
+                                mHandler.sendEmptyMessage(4);
+                                Log.d(TAG, "get next point is finished!\n");
+                                break;
+                            }
+                            currX = newPoint[0];
+                            currY = newPoint[1];
+                            newBmp = highlight(bm, currX, currY);
+                            if (newBmp != null)
+                                drawBmp(holder, newBmp, 0, 0);
                         }
-                        currX = newPoint[0];
-                        currY = newPoint[1];
-                        newBmp = highlight(bm, currX, currY);
-                        if (newBmp != null)
-                            drawBmp(holder, newBmp, 0, 0);
+                        try {
+                            Thread.sleep(nextSpeeds / 10);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
-                    try {
-                        Thread.sleep(nextSpeeds / 10);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                }
+                else
+                {
+                    Log.e(TAG, "get Boundrys is fair!\n");
+                    mHandler.sendEmptyMessage(5);
                 }
             } else {
                 Log.e(TAG, "MyThread run: init Cbitmap not OK!");
@@ -550,6 +601,11 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             case MotionEvent.ACTION_DOWN:
                 float sx = lastX = event.getRawX();
                 float sy = lastY = event.getRawY();
+//                String point3 = "(" + lastX + ", " + lastY + ")";
+//                if (inPicture(lastX, lastY)) {
+//                    Toast.makeText(getApplicationContext(), point3 + "IN PICTURE", 1000).show();
+//                    Log.d(TAG, "Ontouch() point in the picture" + point3);
+//                }
                 mode = DRAG;
                 /*
                 if(imaginer != null) {
@@ -580,13 +636,14 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 if (mode == ZOOM) {
                     distance = getDistance(event);
                     if (distance > 10f) {
+                        Bitmap picNewRes = null;
                         oldmatrix.set(newmatrix);
                         float scale = distance / preDistance;
                         if (scale > 0.01) {
                             scale2finger = scale;
                             oldmatrix.postScale(scale, scale, mid.x, mid.y);//缩放比例和中心点坐标
                             try {
-                                Bitmap picNewRes = Bitmap.createBitmap(bm, 0, 0, bmpWidth, bmpHight, oldmatrix, true);
+                                picNewRes = Bitmap.createBitmap(bm, 0, 0, bmpWidth, bmpHight, oldmatrix, true);
                                 if (picNewRes != null) {
                                     //Bitmap picNewRes = createBitmap(bm,scale2finger,scale2finger);
                                     drawBmp(holder, picNewRes, 0, 0);
@@ -595,29 +652,60 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                                 }
                             } catch (Exception e) {
                                 Log.e(TAG, "scale:" + e.toString() + scale);
+                            } finally {
+                                if(picNewRes != null && !picNewRes.isRecycled()){
+                                    picNewRes.recycle();
+                                    picNewRes = null;
+                                }
+                                System.gc();
                             }
                         }
                     }
                 }
                 if (mode == DRAG) {
-                    if (lockDRAG) {//
-                        float ex = event.getRawX();
-                        float ey = event.getRawY();
-                        ex -= lastX;
-                        ey -= lastY;
-                        String point = "(" + ex + ", " + ey + ")";
-                        //Toast.makeText(getApplicationContext(), "图片移动被锁！拖动" + point, Toast.LENGTH_SHORT).show();
-                    } else {
-                        float ex = event.getRawX();
-                        float ey = event.getRawY();
-                        ex -= lastX;
-                        ey -= lastY;
-                        if (ex >= 10 || ey >= 10 || ex <= -10 || ey <= -10) {
+                    float ex = event.getRawX();
+                    float ey = event.getRawY();
+                    ex -= lastX;
+                    ey -= lastY;
+                    String point = "(" + ex + ", " + ey + ")";
+                    //Toast.makeText(getApplicationContext(), "图片移动被锁！拖动" + point, Toast.LENGTH_SHORT).show();
+                    if (ex >= 10 || ey >= 10 || ex <= -10 || ey <= -10) {
+                        Bitmap move = bm;
+                        Bitmap picNewRes2 = null;
+                        if (lockDRAG) {
+                            if (inPicture(lastX, lastY)) {
+                                //Toast.makeText(getApplicationContext(), point2 + "IN PICTURE", 1000).show();
+                                float x = (lastX - picleft)/scale2finger;
+                                float y = (lastY - pictop)/scale2finger;
+                                String point2 = "(" + x + ", " + x + ")";
+                                Log.d(TAG, "Ontouch() point in the picture" + point2);
+                                int[] movedImag = imaginer.moveFoucs(x, y, ex, ey);
+                                if (movedImag != null) {
+                                    Bitmap.Config config = bm.getConfig();
+                                    move = Bitmap.createBitmap(movedImag, bmpWidth, bmpHight, config);
+                                    picNewRes2 = Bitmap.createBitmap(move, 0, 0, bmpWidth, bmpHight, oldmatrix, true);
+                                    drawBmp(holder, picNewRes2, 0, 0);
+                                    if(move != null && !move.isRecycled()){
+                                        move.recycle();
+                                        move = null;
+                                    }
+                                    if(picNewRes2 != null && !picNewRes2.isRecycled()){
+                                        picNewRes2.recycle();
+                                        picNewRes2 = null;
+                                    }
+                                    System.gc();
+                                }
+                            } else {
+                                Log.d(TAG, "Ontouch() point out the picture");
+                                //Toast.makeText(getApplicationContext(), point2 + "OUT PICTURE", 1000).show();
+                            }
+                            lastX = lastY = 0;
+                        } else {
                             oldmatrix.postTranslate(ex, ey);
-                            Bitmap picNewRes2 = Bitmap.createBitmap(bm, 0, 0, bmpWidth, bmpHight, oldmatrix, true);
-                            drawBmp(holder, picNewRes2, ex, ey);
                             lastX = event.getRawX();
                             lastY = event.getRawY();
+                            picNewRes2 = Bitmap.createBitmap(move, 0, 0, bmpWidth, bmpHight, oldmatrix, true);
+                            drawBmp(holder, picNewRes2, ex, ey);
                         }
                     }
                 }
@@ -642,6 +730,20 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         }
     }
 
+    private boolean inPicture(float x, float y) {
+//        if (x > picleft + location[0])
+//            if(x < picleft + curWitdth + location[0])
+//                if( y > pictop + location[1])
+//                    if(y < pictop + curHeight + location[1])
+//                        return true;
+        if (x >= picleft + location[0] &&
+                x <= picleft + curWitdth + location[0] &&
+                y >= pictop + location[1] &&
+                y <= pictop + curHeight + location[1])
+            return true;
+        return false;
+    }
+
     public synchronized void setNextSpeed(int nextSpeed) {
         nextSpeeds = nextSpeed;
     }
@@ -649,8 +751,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     @Override
     public synchronized void onBackPressed() {
         if (!isBack && bm != null && startX != -1) {
-            cleanScreen();
-            drawBmp(holder, bm, 0, 0);
+            //cleanScreen();
+            //drawBmp(holder, bm, 0, 0);
             isBack = true;
         } else {
             exit();
@@ -707,8 +809,9 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC));
         }
         if (bmp.equals(bm)) {
-            bmpHight = bmp.getHeight();
-            bmpWidth = bmp.getWidth();
+            curHeight = bmpHight = bmp.getHeight();
+            curWitdth = bmpWidth = bmp.getWidth();
+
             float left = (canvsWidth - bmpWidth) / 2;
             float top = (canvsHight - bmpHight) / 2;
             if (left < 0)
@@ -718,7 +821,9 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             canvas.drawBitmap(resizeBitmap(bm), left, top, paint);
         } else {
             int picWidth = bmp.getWidth();
+            curWitdth = picWidth;
             int picHight = bmp.getHeight();
+            curHeight = picHight;
             if (picleft == -1 && pictop == -1 && x == 0 && y == 0) {
                 picleft = (canvsWidth - picWidth) / 2;
                 pictop = (canvsHight - picHight) / 2;

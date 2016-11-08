@@ -16,12 +16,113 @@
 #include <deque>
 #include <map>
 #include <stdlib.h>
+#include <math.h>
 #include "ipoint.h"
 #include "DperMum.h"
+
+//frame of axes: Down and Right is positive direction
+enum FofA//frame of axes
+{
+    RU, //第一象限
+    LU, //第二象限
+    LD, //第三象限
+    RD, //第四象限
+    R , //x正半轴
+    U , //y正半轴
+    L , //x负半轴
+    D , //y负半轴
+    O , //原点
+    NO
+};
+
+struct mvect //Move Vector
+{
+private:
+    FofA getPosition()
+    {
+        if(_x & _y)
+        {
+            if((_x ^_y) >= 0) //同号
+            {
+                if(_x > 0/*&& _y >0*/)
+                    return RD;
+                else
+                    return LU;
+            }
+            else//异号
+            {
+                if(_x  > _y)
+                    return RU;
+                else
+                    return LD;
+            }
+        }
+        else
+        {
+            if(_x == _y) return O;
+            if(_x > 0) return R;
+            if(_x < 0) return L;
+            if(_y < 0) return U;  //frame of axes: Down and Right is positive direction
+            if(_y > 0) return D;
+
+        }
+        return NO;
+    }
+public:
+    bool isLineMove(){return !(_x & _y);}
+    mvect():_x(0),_y(0){
+        _fofa = NO;
+    }
+    mvect(int x,int y):_x(x),_y(y){
+        _fofa = getPosition();
+    }
+    mvect(const mvect& rh)
+    {
+        _x = rh._x;
+        _y = rh._y;
+        _fofa = rh._fofa;
+    }
+    mvect set(int x,int y){_x = x;_y = y;_fofa = getPosition();}
+    mvect reset(int xORy,bool VorH = true){
+        mvect ret(*this);
+        int meta_x = _x/abs(_x);
+        int meta_y = _y/abs(_y);
+        xORy = abs(xORy);
+        if(VorH)//V(y)
+        {
+            ret._x = meta_x*abs((xORy*_x)/_y);
+            ret._y = meta_y*abs(xORy);
+        }
+        else//H(x)
+        {
+            ret._y = meta_x*abs((xORy*_y)/_x);
+            ret._x = meta_y*abs(xORy);
+        }
+        return ret;
+    }
+    mvect operator+(mvect& rhs){
+        _x += rhs._x;
+        _y += rhs._y;
+        return *this;
+    }
+    float getDistence()
+    {
+        return sqrt(_x*_x + _y*_y);
+    }
+public:
+    int _x;
+    int _y;
+    FofA _fofa;
+};
 
 struct limitXXY
 {
     limitXXY():sttx(0),endx(0),ally(0){}
+    limitXXY(const limitXXY& rhs){
+        sttx = rhs.sttx;
+        endx = rhs.endx;
+        ally = rhs.ally;
+    }
     bool change(){return (sttx != endx); }
     bool add(PIXELS begin,PIXELS end,vector<limitXXY>& vtrackLine)
     {
@@ -49,6 +150,19 @@ struct limitXXY
     {
         return x > endx;
     }
+    limitXXY operator=(const limitXXY& rhs){
+        sttx = rhs.sttx;
+        endx = rhs.endx;
+        ally = rhs.ally;
+        return *this;
+    }
+    limitXXY operator+(const mvect& mv){
+        limitXXY rt(*this);
+        rt.sttx += mv._x;
+        rt.endx += mv._x;
+        rt.ally += mv._y;
+        return rt;
+    }
     int sttx; //start point x
     int endx; //end point x
     int ally; //communal y
@@ -59,13 +173,21 @@ typedef vector<TrackTable> vTrackTable;
 
 struct FramePoint
 {
-    FramePoint(){}
+    FramePoint():FramePoint(-1,-1){}
     FramePoint(int H,int W):bindNum(-1)
     {
         framePoint[0] = H;
         framePoint[1] = 0;
         framePoint[2] = W;
         framePoint[3] = 0;
+    }
+    FramePoint(const FramePoint& rh)
+    {
+        bindNum = rh.bindNum;
+        framePoint[0] = rh.framePoint[0];
+        framePoint[1] = rh.framePoint[1];
+        framePoint[2] = rh.framePoint[2];
+        framePoint[3] = rh.framePoint[3];
     }
     bool setframePoint(Position index,const PIXELS& xORy)
     {
@@ -97,8 +219,191 @@ struct FramePoint
         else
             return framePoint[index];
     }
-    void setBindNum(int num){bindNum = num;}
+    //NOTE: this bindNum is first set,then readonly
+    //It's use to bind a boundarys,even though the boundarys is move
+    void setBindNum(int num){if(bindNum == -1)bindNum = num;}
     int getBindNum()const{ return bindNum;}
+    FramePoint operator+(const mvect& mv){
+        FramePoint rt(*this);
+        rt.framePoint[0] += mv._y;
+        rt.framePoint[1] += mv._y ;
+        rt.framePoint[2] += mv._x;
+        rt.framePoint[3] += mv._x;
+        return rt;
+    }
+    FramePoint operator+(const int& mvXorY){
+        FramePoint rt(*this);
+        rt.framePoint[0] += mvXorY;
+        rt.framePoint[1] += mvXorY;
+        rt.framePoint[2] += mvXorY;
+        rt.framePoint[3] += mvXorY;
+        return rt;
+    }
+    FramePoint& operator+=(const mvect& mv){
+        framePoint[0] += mv._y;
+        framePoint[1] += mv._y ;
+        framePoint[2] += mv._x;
+        framePoint[3] += mv._x;
+        return *this;
+    }
+    const FramePoint& operator=(const FramePoint& rhs){
+        framePoint[0] = rhs[0];
+        framePoint[1] = rhs[1];
+        framePoint[2] = rhs[2];
+        framePoint[3] = rhs[3];
+        bindNum       = rhs.bindNum;
+        return *this;
+    }
+    bool operator>(const FramePoint& rhs){
+        if(framePoint[Up] > rhs[Up])
+            return true;
+        else if(framePoint[Up] == rhs[Up] && framePoint[Left] > rhs[Left])
+            return true;
+        else return false;
+    }
+    bool operator<(const FramePoint& rhs){
+        if(framePoint[Up] < rhs[Up])
+            return true;
+        else if(framePoint[Up] == rhs[Up] && framePoint[Left] < rhs[Left])
+            return true;
+        else return false;
+    }
+    bool operator==(const FramePoint& rhs){
+        return  framePoint[0] == rhs[0] &&
+                framePoint[1] == rhs[1] &&
+                framePoint[2] == rhs[2] &&
+                framePoint[3] == rhs[3];
+    }
+    bool operator!=(const FramePoint& rhs){
+        return  framePoint[0] != rhs[0] ||
+                framePoint[1] != rhs[1] ||
+                framePoint[2] != rhs[2] ||
+                framePoint[3] != rhs[3];
+    }
+    bool checkPosition(mvect where,const FramePoint& Curr)
+    {
+        int x = where._x;
+        int y = where._y;
+        int CurrX = 0;
+        int CurrY = 0;
+        //由于移动的方向确定了，以被移动的一个角点为原点，来判断被检测碰撞的框子在移动的向量的那一
+        //侧与该角点坐标被忽略(其实已经被减去)，及可直接由移动向量的坐标(x,y),具体原理详见（《关于边界移动时碰撞的原理讨论》）
+        switch(where._fofa)
+        {
+        case RU://(Curr[Left]-this[Right],Curr[Down]-this[Up]) * (x,y)
+            //return (((Curr[Left]-framePoint[Right])*y-
+            //         (Curr[Down]-framePoint[Up])*x) >= 0);
+            CurrX = Curr[Left]-framePoint[Right];
+            CurrY = Curr[Down]-framePoint[Up];
+            break;
+        case LU://(Curr[Right]-this[Left],Curr[Down]-this[Up]) * (x,y)
+            //return (((Curr[Right]-framePoint[Left])*y+
+            //        (Curr[Down]-framePoint[Up])*x) >=0);
+            CurrX = Curr[Right]-framePoint[Left];
+            CurrY = Curr[Down]-framePoint[Up];
+            break;
+        case LD://(Curr[Right]-this[Left],Curr[Up]-this[Down]) * (x,y)
+            //return (((Curr[Right]-framePoint[Left])*y-
+            //         (Curr[Up]-framePoint[Down])*x)>=0);
+            CurrX = Curr[Right]-framePoint[Left];
+            CurrY = Curr[Up]-framePoint[Down];
+            break;
+        case RD://(Curr[Left]-this[Right],Curr[Up]-this[Down]) * (x,y)
+            //return (((Curr[Left]-framePoint[Right])*y+
+            //         (Curr[Up]-framePoint[Down])*x) >=0);
+            CurrX = Curr[Left]-framePoint[Right];
+            CurrY = Curr[Up]-framePoint[Down];
+            break;
+        default:
+            return false;
+            break;
+        }
+        return ((CurrX*y-CurrY*x)<=0);
+    }
+    bool in(int x,int y){ return ((x >= framePoint[Left] && x <= framePoint[Right]) &&
+                                  (y >= framePoint[Up]   && y <= framePoint[Down])); }
+    //a line is cross the FramePoint or not:line in
+    bool lin(int xORy,int index){ return ((index > Down) ?
+                                  (xORy >= framePoint[Left] && xORy <= framePoint[Right]) :
+                                  (xORy >= framePoint[Up]   && xORy <= framePoint[Down])); }
+    //check this FramePoint whether out of image after move
+    FofA out(const int& width,const int& height){
+        if(framePoint[Up] < 0)
+        {
+            if(framePoint[Left] < 0)
+            {
+                return LU;
+            }
+            return U;
+        }
+        if(framePoint[Left] < 0)
+        {
+            if(framePoint[Down] > height-1)
+            {
+                return LD;
+            }
+            return L;
+        }
+        if(framePoint[Down] > height-1)
+        {
+            if(framePoint[Right] > width-1)
+            {
+                return RD;
+            }
+            return D;
+        }
+        if(framePoint[Right] > width-1)
+        {
+            if(framePoint[Up] < 0)
+            {
+                return RU;
+            }
+            return R;
+        }
+        return NO;
+    }
+    void checkout(mvect& where,int width,int height)
+    {
+        FofA fofa = (*this+where).out(width,height);
+        switch(fofa)
+        {
+        case U:
+            where._y = -framePoint[Up];
+            break;
+        case D:
+            where._y = height-1-framePoint[Down];
+            break;
+        case L:
+            where._x = -framePoint[Left] ;
+            break;
+        case R:
+            where._x = width-1-framePoint[Right] ;
+            break;
+        case RU:
+            where._x = width-1-framePoint[Right] ;
+            where._y = -framePoint[Up] ;
+            break;
+        case LU:
+            where._x = -framePoint[Left] ;
+            where._y = -framePoint[Up] ;
+            break;
+        case LD:
+            where._x = -framePoint[Left] ;
+            where._y = height-1-framePoint[Down];
+            break;
+        case RD:
+            where._x = width-1-framePoint[Right] ;
+            where._y = height-1-framePoint[Down];
+            break;
+        default:
+            break;
+        }
+    }
+    void getCenter(int& x,int& y)
+    {
+        x = (framePoint[Right] + framePoint[Left]) >> 1;
+        y = (framePoint[Down] + framePoint[Up]) >> 1;
+    }
     private:
     int framePoint[4];
     int bindNum;
@@ -112,23 +417,19 @@ enum Method
     NONE
 };
 
+//this position is first relation to second,but NOTE IN2
 enum PRs// position relation
 {
-    IN,
-    CROSS,
-    NEAR,
+    IN,   //first in the second
+    IN2,  //second in the first NOTE!
+    CROSS,//include inscribe
+    HERE, //Circumscribe
+    NEAR, //>0 && <5 //5 is a example,but it's a small number
     OUT,
     EVER
 };
 
-struct mvect //Move Vector
-{
-    int _x;
-    int _y;
-    mvect(int x,int y):_x(x),_y(y){}
-};
-
-typedef vector<FramePoint> Frames;
+typedef deque<FramePoint>  Frames;
 typedef deque<PIXELS>      dPIXELS;
 typedef vector<dPIXELS>    vdPIXELS;
 typedef deque<PIXELS>      dSkipLine;
@@ -199,10 +500,9 @@ public:
     ~dataPcer(){printf("out the dataPcer\n");}
     bool initData(ppPIXELS data,int width,int height);
     bool dealManager(const char* dealType);
-	vdPIXELS getBoundrysData()
-	{
-		return boundarys;
-	}
+    vdPIXELS getBoundrysData(){return boundarys;} 
+    int autoMove(int x,int y,int mx,int my);
+
 public://return all Data
     int      retnWidth();
     int      retnHeight();
@@ -358,13 +658,18 @@ private: //utils
     bool    drawRect(const FramePoint& FP ,int size = 1,RGBQUAD* rgb = NULL);
     //test two Frame postion relation
     PRs     checkPR(const FramePoint& A,const FramePoint& B);
+    //collision algorithm;
+    bool    checkCollision(Frames& fms,int pos,mvect& where,int interval = 0);
+    bool    updateFrames(Frames& fms,int pos,mvect& where);
+    int     getNearFrame(Frames& fms,int x,int y);
     bool    locateFrame();
     bool    locateMove();
     bool    BrainRepair(PIXELS& A,PIXELS& B);
     bool    BrainRepair(PIXELS& A,bool VorH,float range = 1.0);
     bool    moveLine(dPIXELS& line,mvect where,bool isOverWrite = false);
-    bool    moveBoundry(TrackTable& table,mvect where,bool isOverWrite = false);
-
+    bool    moveLine(int sx,int xy,int ex,int ey,mvect where,bool isOverWrite = false);
+    bool    moveBoundary(int pos,mvect where,bool isOverWrite = false);
+    bool    zoomBoundary(dPIXELS& boundry,int step,Method method = UR,bool isOverWrite = false);
 };
 
 #endif // dataPcer.h :[]

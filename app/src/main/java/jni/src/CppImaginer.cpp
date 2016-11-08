@@ -133,51 +133,139 @@ JNIEXPORT jobjectArray JNICALL Java_android_ImgSdk_Imaginer_getBoundrys(JNIEnv *
 	if(dpcer != NULL)
 	{
 		LOGD("dealManager tp get Boundrys OK\n");
-		dpcer->dealManager("g");
-		vdPIXELS BoundrysData = dpcer->getBoundrysData();
-		dPIXELS   boundry;
-		int bsize = BoundrysData.size();
-		LOGD("Boundrys size is:%d\n",bsize);
-		int sizeAb = 0;
-		jclass longArrCls = env->FindClass("[J");
-		result = env->NewObjectArray(bsize, longArrCls, NULL);
-        LOGD("new a ObjectArray to save Boundrys");
-		for (long i = 0; i < bsize; i++)
+		if(dpcer->dealManager("g"))
 		{
-			boundry = BoundrysData[i];
-			sizeAb = boundry.size();
-            //LOGD("now is %d Boundrys\n",i);
-			jlongArray larr = env->NewLongArray(sizeAb);
-            //LOGD("now new a LongArray to save this Boundrys size is :%d\n",sizeAb);
-			jlong l = 0;
-			for(long j = 0; j < sizeAb; j++)
+			vdPIXELS BoundrysData = dpcer->getBoundrysData();
+			dPIXELS   boundry;
+			int bsize = BoundrysData.size();
+			if(bsize > 0)
 			{
-                switch (boundry[j].getEdge())
-                {
-                    case 0:
-                        l = ((l | boundry[j].getY()) << 2) | ((l | boundry[j].getX())<<33);
-                        break;
-                    case -2:
-                        l = ((l | boundry[j].getY()) << 2) | ((l | boundry[j].getX())<<33) | 3;
-                        break;
-                    case -1:
-                        l = ((l | boundry[j].getY()) << 2) | ((l | boundry[j].getX())<<33) | 2;
-                        break;
-                    default:
-                        LOGE("whyyyyyyyyy!\n");
-                }
-				//LOGD("pixle is x:%d  y:%d  edge:%d long:%ld(0x%lx)\n",boundry[j].getX(),boundry[j].getY(),boundry[j].getEdge(),l,l);
-				env->SetLongArrayRegion(larr, j, 1, &l);
-                l = 0;
+				LOGD("Boundrys size is:%d\n",bsize);
+				int sizeAb = 0;
+				jclass longArrCls = env->FindClass("[J");
+				result = env->NewObjectArray(bsize, longArrCls, NULL);
+				LOGD("new a ObjectArray to save Boundrys");
+				for (long i = 0; i < bsize; i++)
+				{
+					boundry = BoundrysData[i];
+					sizeAb = boundry.size();
+					//LOGD("now is %d Boundrys\n",i);
+					jlongArray larr = env->NewLongArray(sizeAb);
+					//LOGD("now new a LongArray to save this Boundrys size is :%d\n",sizeAb);
+					jlong l = 0;
+					for(long j = 0; j < sizeAb; j++)
+					{
+						switch (boundry[j].getEdge())
+						{
+							case 0:
+								l = ((l | boundry[j].getY()) << 2) | ((l | boundry[j].getX())<<33);
+								break;
+							case -2:
+								l = ((l | boundry[j].getY()) << 2) | ((l | boundry[j].getX())<<33) | 3;
+								break;
+							case -1:
+								l = ((l | boundry[j].getY()) << 2) | ((l | boundry[j].getX())<<33) | 2;
+								break;
+							default:
+								LOGE("whyyyyyyyyy!\n");
+						}
+						//LOGD("pixle is x:%d  y:%d  edge:%d long:%ld(0x%lx)\n",boundry[j].getX(),boundry[j].getY(),boundry[j].getEdge(),l,l);
+						env->SetLongArrayRegion(larr, j, 1, &l);
+						l = 0;
+					}
+					env->SetObjectArrayElement(result, i, larr);
+					env->DeleteLocalRef(larr);
+				}
 			}
-			env->SetObjectArrayElement(result, i, larr);
-			env->DeleteLocalRef(larr);
+			else
+			{
+				LOGE("Boundrys size is:%d, so will return NULL\n",bsize);
+			}
+		}else
+		{
+			LOGE("dealManager get Boundrys fair return NULL\n");
 		}
 	}
 	return result;
 }
 
 
+/*
+ * Class:     android_ImgSdk_Imaginer
+ * Method:    moveBoundry
+ * Signature: (IIII)[I
+ */
+JNIEXPORT jintArray JNICALL Java_android_ImgSdk_Imaginer_moveBoundry(JNIEnv *env, jobject obj, jint x, jint y,jint mx,jint my)
+{
+	jintArray out_ints = NULL;
+	jint *cbuf = NULL;
+	LOGD("will be move near point ( %d %d ) the Boundrys????\n",x,y);
+	int i = -1,size = cimageObj->size();
+	if(dpcer != NULL)
+	{
+		LOGD("will autoMove Boundry\n");
+		i = dpcer->autoMove(x,y,mx,my);
+		LOGD("autoMove Boundry is start... %d\n",i);
+		if(i >= 0)
+		{
+			LOGD("autoMove Boundry %d\n",i);
+			ppPIXELS newimageData = dpcer->retnData();
+			cbuf = cimageObj->getAllData(newimageData);
+			out_ints = (env)->NewIntArray(size); 
+			LOGD("new move  ( %d %d ) the Boundrys...\n",mx,my);
+			(env)->SetIntArrayRegion(out_ints, 0, size, cbuf);
+		}
+		else
+		{
+			LOGE("autoMove fair i:%d( %d %d ) the Boundrys...\n",i,mx,my);
+		}
+	}else
+	{
+		LOGE("dpcer is NULL  ( %d %d ) the Boundrys...\n",mx,my);
+	}
+	LOGD("out moveBoundry\n");
+	return out_ints;
+}
+
+/*
+ * Class:     android_ImgSdk_Imaginer
+ * Method:    cutOut
+ * Signature: (II)[I
+ */
+JNIEXPORT jintArray JNICALL Java_android_ImgSdk_Imaginer_cutOut(JNIEnv *env, jobject obj, jint x, jint y)
+{	
+	jintArray out_ints = NULL;
+	jint *cbuf = NULL;
+	LOGD("At cutOut() ( %d %d ) the Boundrys...\n",x,y);
+	if(x == -1 && y == -1)//cut all 
+	{
+		int size = cimageObj->size();
+		if(dpcer != NULL)
+		{
+			LOGD("will cutOut Boundry\n");			
+			if(dpcer->dealManager("c"))//cut 
+			{
+				LOGD("will cutOut all Boundry...\n");
+				ppPIXELS newimageData = dpcer->retnData();
+				cbuf = cimageObj->getAllData(newimageData);
+				out_ints = (env)->NewIntArray(size); 
+				(env)->SetIntArrayRegion(out_ints, 0, size, cbuf);
+			}
+			else
+			{
+				LOGE("cutOut fair ( %d %d ) the Boundrys...\n",x,y);
+			}
+		}else
+		{
+			LOGE("dpcer is NULL  ( %d %d ) the Boundrys...\n",x,y);
+		}
+	}else
+	{
+		LOGD("will be cutOut near point ( %d %d ) the Boundrys????\n",x,y);
+	}
+	LOGD("out cutOut\n");
+	return out_ints;
+}
 
 /*
  * Class:     android_ImgSdk_Imaginer

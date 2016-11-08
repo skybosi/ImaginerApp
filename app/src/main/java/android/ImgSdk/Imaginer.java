@@ -20,12 +20,14 @@ public final class Imaginer {
     private int curX;
     private int curY;
     private String TAG = "IMAGINER";
+
     public Imaginer(Bitmap bitmap) {
         this.bitmap = bitmap;
         this.bmpWidth = bitmap.getWidth();
         this.bmpHeight = bitmap.getHeight();
         this.cimageData = new int[bmpWidth * bmpHeight];
         bitmap.getPixels(cimageData, 0, bmpWidth, 0, 0, bmpWidth, bmpHeight);
+        this.boundrys = null;
         this.curX = 0;
         this.curY = 0;
     }
@@ -37,22 +39,24 @@ public final class Imaginer {
     public int[] getImageData() {
         return cimageData;
     }
-    public void JgetBoundrys() {
-       boundrys = getBoundrys();
+
+    public boolean JgetBoundrys() {
+        boundrys = getBoundrys();
+        if(boundrys==null)
+            return false;
+        return true;
     }
 
     public int[] gotoNextPoint() {
         int next[] = new int[3];
         int linesize = 0;
-        for(int i = curX;i < boundrys.length;++i )
-        {
+        for (int i = curX; i < boundrys.length; ++i) {
             linesize = boundrys[i].length;
-            for(int j = curY;j < linesize;++j) {
-                next[0] = (int)((boundrys[i][curY] & 0xFFFFFFFE00000000L)>>33);
-                next[1] = (int)((boundrys[i][curY] & 0x1FFFFFFFCL) >> 2);
-                next[2] = (int)((boundrys[i][curY] & 3L));
-                switch (next[2])
-                {
+            for (int j = curY; j < linesize; ++j) {
+                next[0] = (int) ((boundrys[i][curY] & 0xFFFFFFFE00000000L) >> 33);
+                next[1] = (int) ((boundrys[i][curY] & 0x1FFFFFFFCL) >> 2);
+                next[2] = (int) ((boundrys[i][curY] & 3L));
+                switch (next[2]) {
                     case 0:
                         next[2] = 0;
                         break;
@@ -68,27 +72,34 @@ public final class Imaginer {
                 curY++;
                 break;
             }
-            if(curY < linesize)
+            if (curY < linesize)
                 break;
             else {
                 curY = 0;
                 curX++;
             }
         }
-        Log.d(TAG,"next pixle is x:" + next[0] + "\ty:" + next[1] + "\tedge:"+ next[2]);
+        Log.d(TAG, "next pixle is x:" + next[0] + "\ty:" + next[1] + "\tedge:" + next[2]);
         return next;
     }
 
     public int getStartX() {
-        return (int)((boundrys[0][0] & 0xFFFFFFFE00000000L)>>33);
+        return (int) ((boundrys[0][0] & 0xFFFFFFFE00000000L) >> 33);
     }
 
     public int getStartY() {
-        return (int)((boundrys[0][0] & 0x1FFFFFFFCL) >> 2);
+        return (int) ((boundrys[0][0] & 0x1FFFFFFFCL) >> 2);
     }
 
     public synchronized void finalize() {
         cfinalize();
+    }
+    public int[] moveFoucs(float x, float y,float mx,float my) {
+            return moveBoundry((int)x,(int)y,(int)mx,(int)my);
+    }
+
+    public int[] cutAll(float x, float y) {
+        return cutOut((int) x,(int)y);
     }
 /*
     public void setImageData(Pixels pixels, int x, int y) {
@@ -117,6 +128,10 @@ public final class Imaginer {
      * @return
      */
     public native long[][] getBoundrys();
+
+    public native  int[] moveBoundry(int x,int y,int mx,int my);
+
+    public native  int[] cutOut(int x,int y);
 
     private native void cfinalize();
 }

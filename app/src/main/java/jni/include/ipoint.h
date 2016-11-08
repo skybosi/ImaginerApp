@@ -40,7 +40,7 @@ class PIXELS
         //@pos    : the point position(default None)
         //@rtimes : reference times   (default 0)
         void   initpPos();
-        void   setpPosStatus(Position pos = None);
+        void   setPostion(Position pos = None,bool isCorner = false);
         U8 set_threshold(PIXELS ppot);
         RGBQUAD get_diff8RGB(PIXELS ppot);
     public:
@@ -49,10 +49,11 @@ class PIXELS
         U8  getRed()const;
         U8  getGreen()const;
         U8  getBlue()const;
+        U8  getAlpha()const;
         int getEdge()const;
         RGBQUAD getRGB()const;
         pix_p getpPos();
-        Position getpPosPostion();
+        Position getPostion();
         //change direction or not
         bool  getpPosStatus();
         int   getpPosValues();

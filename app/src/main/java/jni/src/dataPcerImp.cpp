@@ -43,6 +43,25 @@ bool dataPcerImp::delImageData(ppPIXELS& imageData, int H)
 	return true;
 }
 
+int* dataPcerImp::getAllData(ppPIXELS imageData)
+{
+	LOGD("getAllData is start\n",__FUNCTION__);
+	pixel = new int[cwidth*cheight];
+	int i = 0;
+	for(int y = 0;y < cheight;++y)
+	{
+		for(int x = 0;x < cwidth;++x)
+		{
+			pixel[i++] = rgba2pixel(imageData[y][x].getRed(),
+							   imageData[y][x].getGreen(),
+							   imageData[y][x].getBlue(),
+							   imageData[y][x].getAlpha());							   					   
+		}
+	}
+	LOGD("getAllData is finish\n",__FUNCTION__);
+	return pixel;
+}
+
 bool dataPcerImp::insert(int x,int y,int pixel)
 {
 	PIXELS cpixel;
@@ -53,9 +72,9 @@ bool dataPcerImp::insert(int x,int y,int pixel)
 	return true;
 }
 
-int dataPcerImp::rgba2pixel(int R,int G,int B,int A) 
+inline int dataPcerImp::rgba2pixel(int R,int G,int B,int A) 
 {
-	return ((A << 24) | (R << 16) | (G << 8) | B);
+	return ((A << 24) | (B << 16) | (G << 8) | R);
 }
 
 void dataPcerImp::pixel2rgba(int pixel,int x ,int y,PIXELS& cpixel)

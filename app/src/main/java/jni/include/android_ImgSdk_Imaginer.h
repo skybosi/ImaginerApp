@@ -25,6 +25,22 @@ JNIEXPORT jobjectArray JNICALL Java_android_ImgSdk_Imaginer_getBoundrys
 
 /*
  * Class:     android_ImgSdk_Imaginer
+ * Method:    moveBoundry
+ * Signature: (IIII)[I
+ */
+JNIEXPORT jintArray JNICALL Java_android_ImgSdk_Imaginer_moveBoundry
+  (JNIEnv *, jobject, jint, jint, jint, jint);
+
+/*
+ * Class:     android_ImgSdk_Imaginer
+ * Method:    cutOut
+ * Signature: (II)[I
+ */
+JNIEXPORT jintArray JNICALL Java_android_ImgSdk_Imaginer_cutOut
+  (JNIEnv *, jobject, jint, jint);
+
+/*
+ * Class:     android_ImgSdk_Imaginer
  * Method:    cfinalize
  * Signature: ()V
  */

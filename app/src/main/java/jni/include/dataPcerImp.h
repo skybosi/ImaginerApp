@@ -26,6 +26,7 @@ class dataPcerImp
 		ppPIXELS cimageData;
 		int      cwidth;
 		int      cheight;
+		int*     pixel;
 	/*
 	private:
 		float    baseSmlrty;
@@ -41,18 +42,21 @@ class dataPcerImp
 		int& getHeight(){return cheight;}
 		ppPIXELS& getImageData(){return cimageData;}
 	public:
-		dataPcerImp(int width,int height):cwidth(width),cheight(height)//,baseSmlrty(0),granularity(10),granOpeartor(false)
+		dataPcerImp(int width,int height):cwidth(width),cheight(height),pixel(NULL)//,baseSmlrty(0),granularity(10),granOpeartor(false)
 		{
 			newImageData(cimageData,cwidth,cheight);
 		}
 		~dataPcerImp()
 		{
 			delImageData(cimageData,cheight);
+			if(pixel){delete[] pixel;}			
 		}
 		void     showPIXELS(const PIXELS& cpixel);
 		bool     insert(int x,int y,int pixel);
+		int*     getAllData(ppPIXELS cimageData);
+		int      size(){return cwidth*cheight;}
 	private:
-		int      rgba2pixel(int R,int G,int B,int A);
+		inline int rgba2pixel(int R,int G,int B,int A);
 		void     pixel2rgba(int pixel,int x ,int y,PIXELS& cpixel);
 		ppPIXELS newImageData(ppPIXELS &imageData, int W, int H);
 		bool     delImageData(ppPIXELS& imageData, int H);

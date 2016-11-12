@@ -99,7 +99,11 @@ public final class Imaginer {
     }
 
     public int[] cutAll(float x, float y) {
-        return cutOut((int) x,(int)y);
+        return cutOut((int) x, (int) y);
+    }
+
+    public int[] ShowAll() {
+        return showAll();
     }
 /*
     public void setImageData(Pixels pixels, int x, int y) {
@@ -132,6 +136,8 @@ public final class Imaginer {
     public native  int[] moveBoundry(int x,int y,int mx,int my);
 
     public native  int[] cutOut(int x,int y);
+
+    public native  int[] showAll();
 
     private native void cfinalize();
 }

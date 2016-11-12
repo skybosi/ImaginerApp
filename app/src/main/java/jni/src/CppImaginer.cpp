@@ -269,6 +269,39 @@ JNIEXPORT jintArray JNICALL Java_android_ImgSdk_Imaginer_cutOut(JNIEnv *env, job
 
 /*
  * Class:     android_ImgSdk_Imaginer
+ * Method:    showAll
+ * Signature: ()[I
+ */
+JNIEXPORT jintArray JNICALL Java_android_ImgSdk_Imaginer_showAll(JNIEnv *env, jobject obj)
+{
+	jintArray out_ints = NULL;
+	jint *cbuf = NULL;
+	LOGD("At showAll() the Boundrys...\n");
+	int size = cimageObj->size();
+	if(dpcer != NULL)
+	{
+		LOGD("will showAll Boundry\n");			
+		if(dpcer->dealManager("h"))//cut 
+		{
+			LOGD("will showAll all Boundry...\n");
+			ppPIXELS newimageData = dpcer->retnData();
+			cbuf = cimageObj->getAllData(newimageData);
+			out_ints = (env)->NewIntArray(size); 
+			(env)->SetIntArrayRegion(out_ints, 0, size, cbuf);
+		}
+		else
+		{
+			LOGE("showAll fair the Boundrys...\n");
+		}
+	}else
+	{
+		LOGE("dpcer is NULL the Boundrys...\n");
+	}
+	LOGD("out showAll\n");
+	return out_ints;
+}
+/*
+ * Class:     android_ImgSdk_Imaginer
  * Method:    cfinalize
  * Signature: ()V
  */

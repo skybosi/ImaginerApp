@@ -13,6 +13,8 @@
                 android:title="set next Speed"/>
             <item android:id="@+id/cut"
                 android:title="cut all"/>
+            <item android:id="@+id/show"
+                android:title="highlight all"/>
             <item android:id="@+id/other"
                 android:title="other"/>
             <!-- 别的菜单项 -->

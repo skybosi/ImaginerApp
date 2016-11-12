@@ -68,6 +68,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private int startY = -1;
     private int returnValue = -1;
     private int nextSpeeds = 200;//ms
+    private boolean SHOW_ALL = false;
     //for set color at toolbar
     private Toolbar toolbar = null;
     private int ColorA = 0xFF000000;
@@ -196,7 +197,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             //case R.id.animmenu:
             //    break;
             case R.id.openSD:
-                nextSteps = 1;
+                //nextSteps = 1;
                 loadFile();
                 lockDRAG = false;
                 toolbar.setLogo(R.mipmap.imaginer);
@@ -257,9 +258,18 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                     try {
                         tmpSteps = Integer.parseInt(inputServer.getText().toString());
                         if (tmpSteps > 0) {
+                            SHOW_ALL = false;
+                            nextSpeeds = 200;
                             ((Button) findViewById(R.id.nextPoint)).setText("NEXT" + "(" + inputServer.getText().toString() + ")");
                         } else {
-                            ((Button) findViewById(R.id.nextPoint)).setText("NEXT");
+                            if(tmpSteps == -1)
+                            {
+                                SHOW_ALL =true;
+                                nextSpeeds = 0;
+                                ((Button) findViewById(R.id.nextPoint)).setText("SHOWALL");
+                            }else {
+                                ((Button) findViewById(R.id.nextPoint)).setText("NEXT");
+                            }
                         }
                     } catch (Exception e) {
                         Toast.makeText(MainActivity.this, "Sorry;Yours Input type is Error,please try again!", Toast.LENGTH_SHORT).show();
@@ -463,12 +473,32 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                     int[] cutedImag = imaginer.cutAll(-1, -1);
                     if (cutedImag != null) {
                         Bitmap.Config config = bm.getConfig();
-                        Bitmap move = Bitmap.createBitmap(cutedImag, bmpWidth, bmpHight, config);
-                        Bitmap picNewRes2 = Bitmap.createBitmap(move, 0, 0, bmpWidth, bmpHight, oldmatrix, true);
+                        Bitmap cuted = Bitmap.createBitmap(cutedImag, bmpWidth, bmpHight, config);
+                        Bitmap picNewRes2 = Bitmap.createBitmap(cuted, 0, 0, bmpWidth, bmpHight, oldmatrix, true);
                         drawBmp(holder, picNewRes2, 0, 0);
-                        if(move != null && !move.isRecycled()){
-                            move.recycle();
-                            move = null;
+                        if(cuted != null && !cuted.isRecycled()){
+                            cuted.recycle();
+                            cuted = null;
+                        }
+                        if(picNewRes2 != null && !picNewRes2.isRecycled()){
+                            picNewRes2.recycle();
+                            picNewRes2 = null;
+                        }
+                        System.gc();
+                    }
+                }
+                break;
+            case R.id.show:
+                if(imaginer != null) {
+                    int[] showedImag = imaginer.ShowAll();
+                    if (showedImag != null) {
+                        Bitmap.Config config = bm.getConfig();
+                        Bitmap showed = Bitmap.createBitmap(showedImag, bmpWidth, bmpHight, config);
+                        Bitmap picNewRes2 = Bitmap.createBitmap(showed, 0, 0, bmpWidth, bmpHight, oldmatrix, true);
+                        drawBmp(holder, picNewRes2, 0, 0);
+                        if(showed != null && !showed.isRecycled()){
+                            showed.recycle();
+                            showed = null;
                         }
                         if(picNewRes2 != null && !picNewRes2.isRecycled()){
                             picNewRes2.recycle();
@@ -505,7 +535,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                     startX = imaginer.getStartX();
                     startY = imaginer.getStartY();
                     while (refresh) {
-                        if (nextSteps-- > 0) {
+                        if (nextSteps-- > 0 || SHOW_ALL) {
                             newPoint = imaginer.gotoNextPoint();
                             if (newPoint[0] == 0 && newPoint[1] == 0 && newPoint[2] == 0) {
                                 mHandler.sendEmptyMessage(4);
@@ -601,11 +631,15 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             case MotionEvent.ACTION_DOWN:
                 float sx = lastX = event.getRawX();
                 float sy = lastY = event.getRawY();
-//                String point3 = "(" + lastX + ", " + lastY + ")";
-//                if (inPicture(lastX, lastY)) {
-//                    Toast.makeText(getApplicationContext(), point3 + "IN PICTURE", 1000).show();
-//                    Log.d(TAG, "Ontouch() point in the picture" + point3);
-//                }
+                /*
+                String point3 = "(" + lastX + ", " + lastY + ")";
+                if (inPicture(lastX, lastY)) {
+                    Toast.makeText(getApplicationContext(), point3 + "IN PICTURE", 1000).show();
+                    Log.d(TAG, "Ontouch() point in the picture" + point3);
+                }else
+                {
+                    Log.d(TAG, "Ontouch() point out the picture" + point3);
+                }*/
                 mode = DRAG;
                 /*
                 if(imaginer != null) {
@@ -675,8 +709,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                         if (lockDRAG) {
                             if (inPicture(lastX, lastY)) {
                                 //Toast.makeText(getApplicationContext(), point2 + "IN PICTURE", 1000).show();
-                                float x = (lastX - picleft)/scale2finger;
-                                float y = (lastY - pictop)/scale2finger;
+                                float x = (lastX - picleft-location[0])/scale2finger;
+                                float y = (lastY - pictop-location[1])/scale2finger;
                                 String point2 = "(" + x + ", " + x + ")";
                                 Log.d(TAG, "Ontouch() point in the picture" + point2);
                                 int[] movedImag = imaginer.moveFoucs(x, y, ex, ey);
@@ -731,11 +765,6 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     }
 
     private boolean inPicture(float x, float y) {
-//        if (x > picleft + location[0])
-//            if(x < picleft + curWitdth + location[0])
-//                if( y > pictop + location[1])
-//                    if(y < pictop + curHeight + location[1])
-//                        return true;
         if (x >= picleft + location[0] &&
                 x <= picleft + curWitdth + location[0] &&
                 y >= pictop + location[1] &&
@@ -811,9 +840,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         if (bmp.equals(bm)) {
             curHeight = bmpHight = bmp.getHeight();
             curWitdth = bmpWidth = bmp.getWidth();
-
-            float left = (canvsWidth - bmpWidth) / 2;
-            float top = (canvsHight - bmpHight) / 2;
+            float left = picleft = (canvsWidth - bmpWidth) / 2;
+            float top  = pictop = (canvsHight - bmpHight) / 2;
             if (left < 0)
                 left = 0;
             if (top < 0)
@@ -824,17 +852,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             curWitdth = picWidth;
             int picHight = bmp.getHeight();
             curHeight = picHight;
-            if (picleft == -1 && pictop == -1 && x == 0 && y == 0) {
-                picleft = (canvsWidth - picWidth) / 2;
-                pictop = (canvsHight - picHight) / 2;
-                if (picleft < 0)
-                    picleft = 0;
-                if (pictop < 0)
-                    pictop = 0;
-            } else {
-                picleft += x;
-                pictop += y;
-            }
+            picleft += x;
+            pictop += y;
             canvas.drawBitmap(bmp, picleft, pictop, paint);
         }
         sholder.unlockCanvasAndPost(canvas);

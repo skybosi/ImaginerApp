@@ -41,6 +41,14 @@ JNIEXPORT jintArray JNICALL Java_android_ImgSdk_Imaginer_cutOut
 
 /*
  * Class:     android_ImgSdk_Imaginer
+ * Method:    showAll
+ * Signature: ()[I
+ */
+JNIEXPORT jintArray JNICALL Java_android_ImgSdk_Imaginer_showAll
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     android_ImgSdk_Imaginer
  * Method:    cfinalize
  * Signature: ()V
  */

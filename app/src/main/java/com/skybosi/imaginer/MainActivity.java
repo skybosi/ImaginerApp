@@ -353,7 +353,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         int menuItemId = item.getItemId();
         switch (menuItemId) {
             case R.id.about:
-                new AboutDialog(this).show();
+                new AboutDialog(this,true).show();
                 break;
             case R.id.nextSpeed:
                 //inputDialog("You Can set next speed(ms)");
@@ -868,11 +868,18 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         holder.unlockCanvasAndPost(canvas);
     }
 
-    public class AboutDialog extends AlertDialog {
-        public AboutDialog(Context context) {
+    public static class AboutDialog extends AlertDialog {
+        public AboutDialog(Context context,boolean Auther) {
             super(context);
             final View view = getLayoutInflater().inflate(R.layout.about, null);
-            setTitle("Imaginer   v1.0.0");
+            TextView tv = (TextView) view.findViewById(R.id.aboutText);
+            if(Auther) {
+                tv.setText(R.string.About);
+            }else
+            {
+                tv.setText(R.string.ImageViewAbout);//Thanks for ImageViewer Auther:Alan
+            }
+            setTitle(R.string.app_version);
             setView(view);
         }
     }

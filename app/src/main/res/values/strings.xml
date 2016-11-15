@@ -1,8 +1,14 @@
 <resources>
     <string name="app_name">Imaginer</string>
+    <string name="app_version">Imaginer   v1.0.0</string>
     <string name="hello_world">Hello world,first App!</string>
     <string name="app_settings">Settings</string>
     <string name="app_about">About</string>
+    <string name="details_file_size">File size:</string>
+    <string name="details_image_resolution">Resolution:</string>
+    <string name="details_format">Format:</string>
+    <string name="details_codec">Codec:</string>
+    <string name="details_date_taken">Date taken:</string>
     <string name="About">
     <b>Author: Skybosi</b>
     \n
@@ -11,7 +17,14 @@
     <b>Github:skybosi</b>
     \n
     <b>Welcome to Give Me Advise!</b>
-</string>
+    </string>
+    <string name="ImageViewAbout">
+    <b>Author: Alan</b>
+    \n
+    <b>link : http://blog.csdn.net/mci2004/article/details/7556657</b>
+    \n
+    <b>Thanks for Alan!</b>
+    </string>
 </resources>
 
 

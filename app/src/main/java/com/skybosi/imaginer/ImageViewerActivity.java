@@ -37,6 +37,7 @@ import android.widget.Gallery;
 import android.widget.Gallery.LayoutParams;
 import android.widget.ImageSwitcher;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewSwitcher.ViewFactory;
@@ -52,20 +53,21 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
     private Handler mHandler = null;
     private boolean isExit = false;
 
+
     private Toolbar toolbar = null;
 
-    private ImageSwitcher mImgSwitcher;
+    private ImageSwitcher mImgSwitcher = null;
 
-    private Gallery mGallery;
+    private Gallery mGallery = null;
 
     private ImageAdapter adapter;
 
-    private ArrayList<String> mImgPathList;
+    private static ArrayList<String> mImgPathList;
 
     private static boolean deleteHappen = false;
 
     //sdcard Path
-    private String mSdcardPath;
+    private String mSdcardPath = null;
 
     //cache for the Bitmap res
     private HashMap<Integer, Bitmap> imgCache = new HashMap<Integer, Bitmap>();
@@ -77,6 +79,7 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
     private long firstClick = 0;
     private long secondClick = 0;
     private String loadPath = null;
+    //private Thread thread = null;
 
     /**
      * Called when the activity is first created.
@@ -92,49 +95,7 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
         toolbar.setOnMenuItemClickListener(this);
         hiddenEditMenu(toolbar.getMenu());
 
-        mImgPathList = new ArrayList<String>();
-        mSdcardPath = Environment.getExternalStorageDirectory().toString();
-
-        saveImagePathToList(mImgPathList, mSdcardPath);
-
-        //set ImageSwitcher
-        mImgSwitcher = (ImageSwitcher) findViewById(R.id.imgswitcher);
-        mImgSwitcher.setOnClickListener(this);
-        mImgSwitcher.setFactory(this);
-        mImgSwitcher.setInAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
-        mImgSwitcher.setOutAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_out));
-
-        //set Gallery
-        mGallery = (Gallery) findViewById(R.id.imgallery);
-        adapter = new ImageAdapter(this, mImgPathList);
-        mGallery.setAdapter(adapter);
-        mGallery.setOnItemSelectedListener(this);
-        mGallery.setOnItemLongClickListener(new OnItemLongClickListener() {
-
-            public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
-                                           final int position, long id) {
-                // TODO Auto-generated method stub
-                AlertDialog.Builder build = new Builder(ImageViewerActivity.this);
-                build.setTitle("你想执行下列哪个操作？")
-                        .setPositiveButton("删除选中文件", new OnClickListener() {
-
-                            public void onClick(DialogInterface dialog, int which) {
-                                // TODO Auto-generated method stub
-                                onDelBtnDown(position);
-                            }
-                        })
-                        .setNegativeButton("详细信息", new OnClickListener() {
-
-                            public void onClick(DialogInterface dialog, int which) {
-                                // TODO Auto-generated method stub
-                                onDetailBtnDown(position);
-                            }
-                        });
-                build.create().show();
-                return false;
-            }
-
-        });
+        initAll();
         mHandler = new Handler() {
             @Override
             public void handleMessage(Message msg) {
@@ -142,6 +103,10 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
                 switch (msg.what) {
                     case 0:
                         isExit = false;
+                        break;
+                    case 1:
+                        initAll();
+                        break;
                     default:
                         break;
                 }
@@ -149,10 +114,65 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
         };
     }
 
-    private void hiddenEditMenu(Menu mMenu){
-        if(null != mMenu){
-            for (int i = 0; i < mMenu.size(); i++){
-                if(!mMenu.getItem(i).getTitle().toString().contains("about"))
+    private void initAll() {
+        if (mImgPathList == null) {
+            mImgPathList = new ArrayList<String>();
+            mSdcardPath = Environment.getExternalStorageDirectory().toString();
+            Thread thread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    saveImagePathToList(mImgPathList, mSdcardPath);
+                    mHandler.sendEmptyMessage(1);
+                }
+            });
+            thread.start();
+        } else {
+            (findViewById(R.id.loading)).setVisibility(View.GONE);
+            ((ImageSwitcher) findViewById(R.id.imgswitcher)).setVisibility(View.VISIBLE);
+            //set ImageSwitcher
+            mImgSwitcher = (ImageSwitcher) findViewById(R.id.imgswitcher);
+            mImgSwitcher.setOnClickListener(this);
+            mImgSwitcher.setFactory(this);
+            mImgSwitcher.setInAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
+            mImgSwitcher.setOutAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_out));
+            //set Gallery
+            mGallery = (Gallery) findViewById(R.id.imgallery);
+            if (adapter == null) {
+                adapter = new ImageAdapter(this, mImgPathList);
+            }
+            mGallery.setAdapter(adapter);
+            mGallery.setOnItemSelectedListener(this);
+            mGallery.setOnItemLongClickListener(new OnItemLongClickListener() {
+
+                public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
+                                               final int position, long id) {
+                    // TODO Auto-generated method stub
+                    AlertDialog.Builder build = new Builder(ImageViewerActivity.this);
+                    build.setTitle("你想执行下列哪个操作？")
+                            .setPositiveButton("删除选中文件", new OnClickListener() {
+
+                                public void onClick(DialogInterface dialog, int which) {
+                                    // TODO Auto-generated method stub
+                                    onDelBtnDown(position);
+                                }
+                            })
+                            .setNegativeButton("详细信息", new OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    // TODO Auto-generated method stub
+                                    onDetailBtnDown(position);
+                                }
+                            });
+                    build.create().show();
+                    return false;
+                }
+            });
+        }
+    }
+
+    private void hiddenEditMenu(Menu mMenu) {
+        if (null != mMenu) {
+            for (int i = 0; i < mMenu.size(); i++) {
+                if (!mMenu.getItem(i).getTitle().toString().contains("about"))
                     mMenu.getItem(i).setVisible(false);
             }
         }
@@ -163,7 +183,7 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
         int menuItemId = item.getItemId();
         switch (menuItemId) {
             case R.id.about:
-                new MainActivity.AboutDialog(this,false).show();
+                new MainActivity.AboutDialog(this, false).show();
                 break;
             case R.id.setColor:
                 break;
@@ -211,12 +231,8 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
         } else {
             hideDetailsRow(d, R.id.details_date_taken_row);
         }
-
         AlertDialog.Builder build = new Builder(ImageViewerActivity.this);
-        build.setTitle("详细信息")
-                .setView(d)
-                .show();
-
+        build.setTitle("详细信息").setView(d).show();
     }
 
     private static void setDetailsValue(View d, String text, int valueId) {
@@ -229,16 +245,13 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
 
 
     private String geTitle(int pos) {
-
         String title = mImgPathList.get(pos);
         int last_s = title.lastIndexOf("/");
         int last_l = title.lastIndexOf(".");
-
         title = title.substring(last_s + 1, last_l);
         return title;
 
     }
-
 
     private void onDelBtnDown(int pos) {
         // TODO Auto-generated method stub
@@ -246,11 +259,9 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
         Log.d(LOG_TAG, "the pos will deleted is " + pos);
         File current = new File(mImgPathList.get(pos));
         current.delete();
-
         mImgPathList.remove(pos);
         adapter.notifyDataSetChanged();
         mGallery.setAdapter(adapter);
-
         if (pos == 0) {
             mImgSwitcher.setImageDrawable(null);
             Toast.makeText(this, "The Picture isn't exist, or Deleted",
@@ -270,13 +281,25 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
                     if (isAnImageFile(file.getAbsolutePath())) {
                         list.add(file.getAbsolutePath());
                     }
-                } else if (file.isDirectory() && !file.isHidden() && !file.getAbsolutePath().contains("DCIM")) {
+                } else if (file.isDirectory() && !file.isHidden() && !isImagefilter(file.getAbsolutePath())) {
                     //get image path recursively
                     this.saveImagePathToList(mImgPathList, file.getAbsolutePath());
                 }
                 continue;
             }
         }
+    }
+
+    boolean isImagefilter(String ImagePath) {
+        ImagePath = ImagePath.toLowerCase();
+        if (ImagePath.contains("dcim") ||
+                ImagePath.contains("dcims") ||
+                ImagePath.contains("picture") ||
+                ImagePath.contains("pictures") ||
+                ImagePath.contains("photo") ||
+                ImagePath.contains("photos"))
+            return true;
+        return false;
     }
 
     //check the fils's suffix and tell whether it's an image
@@ -301,13 +324,16 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
 
     @Override
     public void onClick(View v) {
-        switch (v.getId())
-        {
+        switch (v.getId()) {
             case R.id.imgswitcher:
                 if (mImgSwitcher != null) {
                     clickcount++;
                     if (clickcount == 1) {
                         firstClick = System.currentTimeMillis();
+                        if (mGallery.getVisibility() != View.GONE)
+                            mGallery.setVisibility(View.GONE);
+                        else
+                            mGallery.setVisibility(View.VISIBLE);
                     } else if (clickcount == 2) {
                         secondClick = System.currentTimeMillis();
                         if (secondClick - firstClick < 1000) {
@@ -316,12 +342,6 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
                             intent.putExtra("filename", loadPath);
                             setResult(RESULT_CODE, intent);
                             finish();
-                        }else
-                        {
-                            if (mGallery.getVisibility() != View.GONE)
-                                mGallery.setVisibility(View.GONE);
-                            else
-                                mGallery.setVisibility(View.VISIBLE);
                         }
                         clickcount = 0;
                         firstClick = 0;
@@ -334,13 +354,10 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
         }
     }
 
-
     public class ImageAdapter extends BaseAdapter {
-
         private Context mContext;
         private int mGalleryBackground;
         private ArrayList<String> mArrayList;
-
         public ImageAdapter(Context c, ArrayList<String> list) {
             mContext = c;
             mArrayList = list;
@@ -349,7 +366,6 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
             mGalleryBackground = mTypeArray.getResourceId(R.styleable.Gallery_android_galleryItemBackground, 0);
             mTypeArray.recycle();
         }
-
         public int getCount() {
             // TODO Auto-generated method stub
             return mArrayList.size();
@@ -373,9 +389,7 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
             Bitmap current = imgCache.get(position);
             if (deleteHappen || current == null) {
                 current = BitmapFactory.decodeFile(mArrayList.get(position));
-
                 Log.e(LOG_TAG, "decodeFile path = " + mArrayList.get(position));
-
                 imgCache.put(position, current);
             }
             ((TextView) findViewById(R.id.toolbar_title)).setText(mImgPathList.get(position));
@@ -384,11 +398,9 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
             int WandH = mGallery.getHeight();
             imgView.setLayoutParams(new Gallery.LayoutParams(WandH, WandH));
             imgView.setBackgroundResource(mGalleryBackground);
-
             //deleteHappen = false;
             return imgView;
         }
-
     }
 
     public void onItemSelected(AdapterView<?> arg0, View arg1, int pos,

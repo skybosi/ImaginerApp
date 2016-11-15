@@ -30,6 +30,31 @@
         android:layout_weight="0.92"
         android:orientation="vertical"
         android:weightSum="1">
+
+        <LinearLayout
+            android:id="@+id/loading"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="0.85"
+            android:orientation="vertical"
+            android:gravity = "center_horizontal"
+            android:layout_gravity="center"
+            android:weightSum="1"
+            android:visibility="visible">
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/loadBar"
+            android:layout_weight="0.8"
+            style="?android:attr/progressBarStyleLarge" />
+        <TextView
+            android:id="@+id/loadText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.2"
+            android:textSize="20dp"
+            android:text = "Loading,Please Wait..."/>
+        </LinearLayout>
         <ImageSwitcher
             android:id="@+id/imgswitcher"
             android:layout_width="match_parent"
@@ -37,12 +62,13 @@
             android:layout_alignParentLeft="true"
             android:layout_alignParentRight="true"
             android:layout_gravity="center"
-            android:layout_weight="0.8" />
+            android:layout_weight="0.85"
+            android:visibility="invisible"/>
         <Gallery
             android:id="@+id/imgallery"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="0.12"
-            android:gravity="center_vertical" />
+            android:layout_weight="0.15"
+            android:layout_gravity="bottom" />
     </LinearLayout>
 </LinearLayout>

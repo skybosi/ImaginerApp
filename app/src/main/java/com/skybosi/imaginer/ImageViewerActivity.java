@@ -22,6 +22,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.text.TextUtils;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -106,9 +107,15 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
                         break;
                     case 1:
                         initAll();
+                        ((TextView) findViewById(R.id.toolbar_image)).setEllipsize(TextUtils.TruncateAt.MARQUEE);
                         break;
                     case 2:
                         Toast.makeText(getApplication(), "图片列表为空，加载失败",Toast.LENGTH_LONG).show();
+                        break;
+                    case 3:
+                        String  filepath = (String) msg.obj;
+                        ((TextView) findViewById(R.id.toolbar_image)).setEllipsize(TextUtils.TruncateAt.END);
+                        ((TextView) findViewById(R.id.toolbar_image)).setText(filepath);
                         break;
                     default:
                         break;
@@ -121,7 +128,8 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
         if (mImgPathList.isEmpty()) {
             String state = Environment.getExternalStorageState();
             if (Environment.MEDIA_MOUNTED.equals(state)) {
-                mSdcardPath = Environment.getExternalStorageDirectory().toString();
+                //mSdcardPath = Environment.getExternalStorageDirectory().toString();
+                mSdcardPath = "/storage";
             } else {
                 Log.e(LOG_TAG, "SDCARD is not MOUNTED");
             }
@@ -285,6 +293,10 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
         // TODO Auto-generated method stub
         File mFile = new File(filePath);
         File[] listFile = mFile.listFiles();
+        Message msg = Message.obtain();
+        msg.what = 3;
+        msg.obj = filePath;
+        mHandler.sendMessage(msg);
         if (listFile != null) {
             for (int i = 0; i < listFile.length; i++) {
                 File file = listFile[i];
@@ -398,12 +410,17 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
             Log.d(LOG_TAG, "getView--->and pos = " + position);
             ImageView imgView = new ImageView(mContext);
             Bitmap current = imgCache.get(position);
+            Log.e(LOG_TAG, "imgCache size = " + imgCache.size());
+            if(imgCache.size() > 6)
+            {
+                releaseBitmap();
+            }
             if (deleteHappen || current == null) {
                 current = BitmapFactory.decodeFile(mArrayList.get(position));
                 Log.e(LOG_TAG, "decodeFile path = " + mArrayList.get(position));
                 imgCache.put(position, current);
             }
-            ((TextView) findViewById(R.id.toolbar_title)).setText(mImgPathList.get(position));
+            ((TextView) findViewById(R.id.toolbar_image)).setText(mImgPathList.get(position));
             imgView.setImageBitmap(current);
             imgView.setScaleType(ImageView.ScaleType.FIT_CENTER);
             int WandH = mGallery.getHeight();
@@ -447,6 +464,7 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
                 delBitmap.recycle();
             }
         }
+        System.gc();
 
     }
 

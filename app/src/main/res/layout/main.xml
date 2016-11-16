@@ -12,7 +12,7 @@
         android:layout_weight="0.08"
         android:popupTheme="@style/AppTheme">
         <TextView
-            android:id="@+id/toolbar_title"
+            android:id="@+id/toolbar_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:ellipsize="marquee"

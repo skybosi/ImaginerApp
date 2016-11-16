@@ -8,13 +8,13 @@
         app:showAsAction="never">
         <menu>
             <item android:id="@+id/setColor"
-                android:title="set color"/>
+                android:title="选取颜色"/>
             <item android:id="@+id/nextSpeed"
-                android:title="set next Speed"/>
+                android:title="next速度(ms)"/>
             <item android:id="@+id/cut"
-                android:title="cut all"/>
+                android:title="抠图alpha"/>
             <item android:id="@+id/show"
-                android:title="highlight all"/>
+                android:title="边界高亮"/>
             <item android:id="@+id/other"
                 android:title="other"/>
             <!-- 别的菜单项 -->

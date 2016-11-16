@@ -13,6 +13,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -62,7 +63,7 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
 
     private ImageAdapter adapter;
 
-    private static ArrayList<String> mImgPathList;
+    private static ArrayList<String> mImgPathList = new ArrayList<String>();;
 
     private static boolean deleteHappen = false;
 
@@ -94,7 +95,6 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
         //toolbar.setLogo(R.mipmap.imaginer);
         toolbar.setOnMenuItemClickListener(this);
         hiddenEditMenu(toolbar.getMenu());
-
         initAll();
         mHandler = new Handler() {
             @Override
@@ -107,6 +107,9 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
                     case 1:
                         initAll();
                         break;
+                    case 2:
+                        Toast.makeText(getApplication(), "图片列表为空，加载失败",Toast.LENGTH_LONG).show();
+                        break;
                     default:
                         break;
                 }
@@ -115,13 +118,19 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
     }
 
     private void initAll() {
-        if (mImgPathList == null) {
-            mImgPathList = new ArrayList<String>();
-            mSdcardPath = Environment.getExternalStorageDirectory().toString();
+        if (mImgPathList.isEmpty()) {
+            String state = Environment.getExternalStorageState();
+            if (Environment.MEDIA_MOUNTED.equals(state)) {
+                mSdcardPath = Environment.getExternalStorageDirectory().toString();
+            } else {
+                Log.e(LOG_TAG, "SDCARD is not MOUNTED");
+            }
             Thread thread = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     saveImagePathToList(mImgPathList, mSdcardPath);
+                    if(mImgPathList.size() == 0)
+                        mHandler.sendEmptyMessage(2);
                     mHandler.sendEmptyMessage(1);
                 }
             });
@@ -172,7 +181,9 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
     private void hiddenEditMenu(Menu mMenu) {
         if (null != mMenu) {
             for (int i = 0; i < mMenu.size(); i++) {
-                if (!mMenu.getItem(i).getTitle().toString().contains("about"))
+                String menus =  mMenu.getItem(i).getTitle().toString();
+                String about = getResources().getString(R.string.app_about);
+                if (!menus.toLowerCase().contains(about))
                     mMenu.getItem(i).setVisible(false);
             }
         }
@@ -281,11 +292,11 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
                     if (isAnImageFile(file.getAbsolutePath())) {
                         list.add(file.getAbsolutePath());
                     }
-                } else if (file.isDirectory() && !file.isHidden() && !isImagefilter(file.getAbsolutePath())) {
+                } else if (file.isDirectory() && !file.isHidden()/*&& !isImagefilter(file.getAbsolutePath())*/) {
                     //get image path recursively
-                    this.saveImagePathToList(mImgPathList, file.getAbsolutePath());
-                }
-                continue;
+                    saveImagePathToList(mImgPathList, file.getAbsolutePath());
+                }else
+                    continue;
             }
         }
     }
@@ -460,7 +471,7 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
             this.finish();
         } else {
             isExit = true;
-            Toast.makeText(getApplicationContext(), "再按一次后退键退出主程序！", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "再按一次后退键退出文件浏览！", Toast.LENGTH_SHORT).show();
             mHandler.sendEmptyMessageDelayed(0, 2000);// 2秒后发送消息
         }
     }

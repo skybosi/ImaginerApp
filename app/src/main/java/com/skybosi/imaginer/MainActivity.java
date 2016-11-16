@@ -31,7 +31,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -181,7 +180,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
 
             }
         });
-        Toast.makeText(MainActivity.this, "You can long click to set next steps you Want!", Toast.LENGTH_LONG).show();
+        Toast.makeText(MainActivity.this, "你能长按NEXT设置执行步数", Toast.LENGTH_LONG).show();
         WindowManager manager = this.getWindowManager();
         DisplayMetrics outMetrics = new DisplayMetrics();
         manager.getDefaultDisplay().getMetrics(outMetrics);
@@ -197,7 +196,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             //case R.id.animmenu:
             //    break;
             case R.id.openSD:
-                //nextSteps = 1;
+                nextSteps = 0;
+                ((Button) findViewById(R.id.nextPoint)).setText("NEXT");
                 loadFile();
                 lockDRAG = false;
                 toolbar.setLogo(R.mipmap.imaginer);

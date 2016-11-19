@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -130,15 +131,16 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
         if (mImgPathList.isEmpty()) {
             String state = Environment.getExternalStorageState();
             if (Environment.MEDIA_MOUNTED.equals(state)) {
-                //mSdcardPath = Environment.getExternalStorageDirectory().toString();
-                mSdcardPath = "/storage";
+                mSdcardPath = Environment.getExternalStorageDirectory().toString();
+                //mSdcardPath = "/storage";
             } else {
                 Log.e(LOG_TAG, "SDCARD is not MOUNTED");
             }
             Thread thread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    saveImagePathToList(mImgPathList, mSdcardPath);
+                    traverseFolder1(mSdcardPath, mImgPathList);
+                    //saveImagePathToList(mImgPathList, mSdcardPath);
                     if (mImgPathList.size() == 0)
                         mHandler.sendEmptyMessage(2);
                     mHandler.sendEmptyMessage(1);
@@ -290,6 +292,46 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
         }
     }
 
+    public void traverseFolder1(String path,ArrayList<String> imagelist) {
+        File file = new File(path);
+        if (file.exists()) {
+            LinkedList<File> list = new LinkedList<File>();
+            File[] files = file.listFiles();
+            for (File file2 : files) {
+                if (file2.isDirectory() && !file2.isHidden()) {
+                    list.add(file2);
+                } else {
+                    if (isAnImageFile(file2.getAbsolutePath())) {
+                        imagelist.add(file2.getAbsolutePath());
+                    }
+                }
+            }
+            File temp_file;
+            while (!list.isEmpty()) {
+                temp_file = list.removeFirst();
+                Message msg = Message.obtain();
+                msg.what = 3;
+                msg.obj = temp_file.getAbsolutePath().toString();
+                mHandler.sendMessage(msg);
+                try {
+                    files = temp_file.listFiles();
+                    for (File file2 : files) {
+                        if (file2.isDirectory()) {
+                            list.add(file2);
+                        } else {
+                            if (isAnImageFile(file2.getAbsolutePath())) {
+                                imagelist.add(file2.getAbsolutePath());
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.e(LOG_TAG, e.toString() + "this folder " + temp_file.getAbsolutePath().toString() + " is empty");
+                }
+            }
+        } else {
+            System.out.println("文件不存在!");
+        }
+    }
     //get image path recursively
     private void saveImagePathToList(ArrayList<String> list, String filePath) {
         // TODO Auto-generated method stub
@@ -419,7 +461,7 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
                 releaseBitmap();
             }
             if (deleteHappen || current == null) {
-                current = BitmapFactory.decodeFile(mArrayList.get(position));
+                current = BitmapFactory.decodeFile(mArrayList.get(position),getHeapOpts(new File(mArrayList.get(position))));
                 Log.e(LOG_TAG, "decodeFile path = " + mArrayList.get(position));
                 imgCache.put(position, current);
             }
@@ -495,6 +537,26 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
             Toast.makeText(getApplicationContext(), "再按一次后退键退出文件浏览！", Toast.LENGTH_SHORT).show();
             mHandler.sendEmptyMessageDelayed(0, 2000);// 2秒后发送消息
         }
+    }
+
+    // 图片加载的类
+    public static BitmapFactory.Options getHeapOpts(File file) {
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        // 数字越大读出的图片占用的heap必须越小，不然总是溢出
+        if (file.length() < 20480) { // 0-20k
+            opts.inSampleSize = 1;// 这里意为缩放的大小
+        } else if (file.length() < 51200) { // 20-50k
+            opts.inSampleSize = 2;
+        } else if (file.length() < 307200) { // 50-300k
+            opts.inSampleSize = 4;
+        } else if (file.length() < 819200) { // 300-800k
+            opts.inSampleSize = 6;
+        } else if (file.length() < 1048576) { // 800-1024k
+            opts.inSampleSize = 8;
+        } else {
+            opts.inSampleSize = 10;
+        }
+        return opts;
     }
 
     @Override

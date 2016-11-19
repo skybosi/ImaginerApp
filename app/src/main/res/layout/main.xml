@@ -46,7 +46,8 @@
             android:layout_height="wrap_content"
             android:id="@+id/loadBar"
             android:layout_weight="0.8"
-            style="?android:attr/progressBarStyleLarge" />
+            style="?android:attr/progressBarStyleLarge"
+            />
         <TextView
             android:id="@+id/loadText"
             android:layout_width="wrap_content"

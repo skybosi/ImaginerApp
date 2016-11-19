@@ -57,6 +57,7 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
 
 
     private Toolbar toolbar = null;
+    private TextView toolTV = null;
 
     private ImageSwitcher mImgSwitcher = null;
 
@@ -64,7 +65,8 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
 
     private ImageAdapter adapter;
 
-    private static ArrayList<String> mImgPathList = new ArrayList<String>();;
+    private static ArrayList<String> mImgPathList = new ArrayList<String>();
+    ;
 
     private static boolean deleteHappen = false;
 
@@ -90,13 +92,12 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.inflateMenu(R.menu.menu_main);//设置右上角的填充菜单
         //toolbar.setLogo(R.mipmap.imaginer);
         toolbar.setOnMenuItemClickListener(this);
+        toolTV = ((TextView) findViewById(R.id.toolbar_image));
         hiddenEditMenu(toolbar.getMenu());
-        initAll();
         mHandler = new Handler() {
             @Override
             public void handleMessage(Message msg) {
@@ -107,21 +108,22 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
                         break;
                     case 1:
                         initAll();
-                        ((TextView) findViewById(R.id.toolbar_image)).setEllipsize(TextUtils.TruncateAt.MARQUEE);
+                        toolTV.setEllipsize(TextUtils.TruncateAt.MARQUEE);
                         break;
                     case 2:
-                        Toast.makeText(getApplication(), "图片列表为空，加载失败",Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplication(), "图片列表为空，加载失败", Toast.LENGTH_LONG).show();
                         break;
                     case 3:
-                        String  filepath = (String) msg.obj;
-                        ((TextView) findViewById(R.id.toolbar_image)).setEllipsize(TextUtils.TruncateAt.END);
-                        ((TextView) findViewById(R.id.toolbar_image)).setText(filepath);
+                        String filepath = (String) msg.obj;
+                        toolTV.setEllipsize(TextUtils.TruncateAt.END);
+                        toolTV.setText(filepath);
                         break;
                     default:
                         break;
                 }
             }
         };
+        initAll();
     }
 
     private void initAll() {
@@ -137,7 +139,7 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
                 @Override
                 public void run() {
                     saveImagePathToList(mImgPathList, mSdcardPath);
-                    if(mImgPathList.size() == 0)
+                    if (mImgPathList.size() == 0)
                         mHandler.sendEmptyMessage(2);
                     mHandler.sendEmptyMessage(1);
                 }
@@ -189,7 +191,7 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
     private void hiddenEditMenu(Menu mMenu) {
         if (null != mMenu) {
             for (int i = 0; i < mMenu.size(); i++) {
-                String menus =  mMenu.getItem(i).getTitle().toString();
+                String menus = mMenu.getItem(i).getTitle().toString();
                 String about = getResources().getString(R.string.app_about);
                 if (!menus.toLowerCase().contains(about))
                     mMenu.getItem(i).setVisible(false);
@@ -307,7 +309,7 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
                 } else if (file.isDirectory() && !file.isHidden()/*&& !isImagefilter(file.getAbsolutePath())*/) {
                     //get image path recursively
                     saveImagePathToList(mImgPathList, file.getAbsolutePath());
-                }else
+                } else
                     continue;
             }
         }
@@ -381,6 +383,7 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
         private Context mContext;
         private int mGalleryBackground;
         private ArrayList<String> mArrayList;
+
         public ImageAdapter(Context c, ArrayList<String> list) {
             mContext = c;
             mArrayList = list;
@@ -389,6 +392,7 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
             mGalleryBackground = mTypeArray.getResourceId(R.styleable.Gallery_android_galleryItemBackground, 0);
             mTypeArray.recycle();
         }
+
         public int getCount() {
             // TODO Auto-generated method stub
             return mArrayList.size();
@@ -411,8 +415,7 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
             ImageView imgView = new ImageView(mContext);
             Bitmap current = imgCache.get(position);
             Log.e(LOG_TAG, "imgCache size = " + imgCache.size());
-            if(imgCache.size() > 6)
-            {
+            if (imgCache.size() > 6) {
                 releaseBitmap();
             }
             if (deleteHappen || current == null) {
@@ -420,7 +423,7 @@ public class ImageViewerActivity extends Activity implements View.OnClickListene
                 Log.e(LOG_TAG, "decodeFile path = " + mArrayList.get(position));
                 imgCache.put(position, current);
             }
-            ((TextView) findViewById(R.id.toolbar_image)).setText(mImgPathList.get(position));
+            toolTV.setText(mImgPathList.get(position));
             imgView.setImageBitmap(current);
             imgView.setScaleType(ImageView.ScaleType.FIT_CENTER);
             int WandH = mGallery.getHeight();

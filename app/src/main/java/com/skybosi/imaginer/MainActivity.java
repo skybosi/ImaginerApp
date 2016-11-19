@@ -104,6 +104,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private float picleft = -1;
     private float pictop = -1;
     private int[] location = new int[2];
+
     //get surfaceview's location for the location on the picture
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
@@ -196,17 +197,21 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             //case R.id.animmenu:
             //    break;
             case R.id.openSD:
+                loadFile();
                 nextSteps = 0;
                 ((Button) findViewById(R.id.nextPoint)).setText("NEXT");
-                loadFile();
                 lockDRAG = false;
                 toolbar.setLogo(R.mipmap.imaginer);
                 break;
             case R.id.nextPoint:
-                if (tmpSteps <= 1)
-                    nextSteps = 1;
-                else {
-                    nextSteps = tmpSteps;
+                if (!imaginer.getNextStatus()) {
+                    mHandler.sendEmptyMessage(4);
+                } else {
+                    if (tmpSteps <= 1)
+                        nextSteps = 1;
+                    else {
+                        nextSteps = tmpSteps;
+                    }
                 }
                 break;
             case R.id.toolbar:
@@ -262,12 +267,11 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                             nextSpeeds = 200;
                             ((Button) findViewById(R.id.nextPoint)).setText("NEXT" + "(" + inputServer.getText().toString() + ")");
                         } else {
-                            if(tmpSteps == -1)
-                            {
-                                SHOW_ALL =true;
+                            if (tmpSteps == -1) {
+                                SHOW_ALL = true;
                                 nextSpeeds = 0;
                                 ((Button) findViewById(R.id.nextPoint)).setText("SHOWALL");
-                            }else {
+                            } else {
                                 ((Button) findViewById(R.id.nextPoint)).setText("NEXT");
                             }
                         }
@@ -289,8 +293,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         return false;
     }
 
-    void clearAll()
-    {
+    void clearAll() {
         newmatrix.reset();
         oldmatrix.reset();
         lastX = lastY = 0;
@@ -298,6 +301,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         distance = preDistance = 0;
         mid.set(0, 0);
     }
+
     //init the picture that will be deal with
     private void init_bmp() {
         if (bm != null) {
@@ -353,7 +357,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         int menuItemId = item.getItemId();
         switch (menuItemId) {
             case R.id.about:
-                new AboutDialog(this,true).show();
+                new AboutDialog(this, true).show();
                 break;
             case R.id.nextSpeed:
                 //inputDialog("You Can set next speed(ms)");
@@ -469,18 +473,18 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 });
                 break;
             case R.id.cut:
-                if(imaginer != null) {
+                if (imaginer != null) {
                     int[] cutedImag = imaginer.cutAll(-1, -1);
                     if (cutedImag != null) {
                         Bitmap.Config config = bm.getConfig();
                         Bitmap cuted = Bitmap.createBitmap(cutedImag, bmpWidth, bmpHight, config);
                         Bitmap picNewRes2 = Bitmap.createBitmap(cuted, 0, 0, bmpWidth, bmpHight, oldmatrix, true);
                         drawBmp(holder, picNewRes2, 0, 0);
-                        if(cuted != null && !cuted.isRecycled()){
+                        if (cuted != null && !cuted.isRecycled()) {
                             cuted.recycle();
                             cuted = null;
                         }
-                        if(picNewRes2 != null && !picNewRes2.isRecycled()){
+                        if (picNewRes2 != null && !picNewRes2.isRecycled()) {
                             picNewRes2.recycle();
                             picNewRes2 = null;
                         }
@@ -489,18 +493,18 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 }
                 break;
             case R.id.show:
-                if(imaginer != null) {
+                if (imaginer != null) {
                     int[] showedImag = imaginer.ShowAll();
                     if (showedImag != null) {
                         Bitmap.Config config = bm.getConfig();
                         Bitmap showed = Bitmap.createBitmap(showedImag, bmpWidth, bmpHight, config);
                         Bitmap picNewRes2 = Bitmap.createBitmap(showed, 0, 0, bmpWidth, bmpHight, oldmatrix, true);
                         drawBmp(holder, picNewRes2, 0, 0);
-                        if(showed != null && !showed.isRecycled()){
+                        if (showed != null && !showed.isRecycled()) {
                             showed.recycle();
                             showed = null;
                         }
-                        if(picNewRes2 != null && !picNewRes2.isRecycled()){
+                        if (picNewRes2 != null && !picNewRes2.isRecycled()) {
                             picNewRes2.recycle();
                             picNewRes2 = null;
                         }
@@ -530,14 +534,14 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             int[] newPoint = null;
             if (imaginer != null && imaginer.init()) {
                 Log.d(TAG, "MyThread run: init Cbitmap finish");
-                if(imaginer.JgetBoundrys()) {
+                if (imaginer.JgetBoundrys()) {
                     mHandler.sendEmptyMessage(3);
                     startX = imaginer.getStartX();
                     startY = imaginer.getStartY();
                     while (refresh) {
                         if (nextSteps-- > 0 || SHOW_ALL) {
                             newPoint = imaginer.gotoNextPoint();
-                            if (newPoint[0] == 0 && newPoint[1] == 0 && newPoint[2] == 0) {
+                            if (!imaginer.getNextStatus()) {
                                 mHandler.sendEmptyMessage(4);
                                 Log.d(TAG, "get next point is finished!\n");
                                 break;
@@ -554,9 +558,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                             e.printStackTrace();
                         }
                     }
-                }
-                else
-                {
+                } else {
                     Log.e(TAG, "get Boundrys is fair!\n");
                     mHandler.sendEmptyMessage(5);
                 }
@@ -687,7 +689,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                             } catch (Exception e) {
                                 Log.e(TAG, "scale:" + e.toString() + scale);
                             } finally {
-                                if(picNewRes != null && !picNewRes.isRecycled()){
+                                if (picNewRes != null && !picNewRes.isRecycled()) {
                                     picNewRes.recycle();
                                     picNewRes = null;
                                 }
@@ -709,8 +711,8 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                         if (lockDRAG) {
                             if (inPicture(lastX, lastY)) {
                                 //Toast.makeText(getApplicationContext(), point2 + "IN PICTURE", 1000).show();
-                                float x = (lastX - picleft-location[0])/scale2finger;
-                                float y = (lastY - pictop-location[1])/scale2finger;
+                                float x = (lastX - picleft - location[0]) / scale2finger;
+                                float y = (lastY - pictop - location[1]) / scale2finger;
                                 String point2 = "(" + x + ", " + x + ")";
                                 Log.d(TAG, "Ontouch() point in the picture" + point2);
                                 int[] movedImag = imaginer.moveFoucs(x, y, ex, ey);
@@ -719,11 +721,11 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                                     move = Bitmap.createBitmap(movedImag, bmpWidth, bmpHight, config);
                                     picNewRes2 = Bitmap.createBitmap(move, 0, 0, bmpWidth, bmpHight, oldmatrix, true);
                                     drawBmp(holder, picNewRes2, 0, 0);
-                                    if(move != null && !move.isRecycled()){
+                                    if (move != null && !move.isRecycled()) {
                                         move.recycle();
                                         move = null;
                                     }
-                                    if(picNewRes2 != null && !picNewRes2.isRecycled()){
+                                    if (picNewRes2 != null && !picNewRes2.isRecycled()) {
                                         picNewRes2.recycle();
                                         picNewRes2 = null;
                                     }
@@ -841,7 +843,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             curHeight = bmpHight = bmp.getHeight();
             curWitdth = bmpWidth = bmp.getWidth();
             float left = picleft = (canvsWidth - bmpWidth) / 2;
-            float top  = pictop = (canvsHight - bmpHight) / 2;
+            float top = pictop = (canvsHight - bmpHight) / 2;
             if (left < 0)
                 left = 0;
             if (top < 0)
@@ -869,14 +871,13 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     }
 
     public static class AboutDialog extends AlertDialog {
-        public AboutDialog(Context context,boolean Auther) {
+        public AboutDialog(Context context, boolean Auther) {
             super(context);
             final View view = getLayoutInflater().inflate(R.layout.about, null);
             TextView tv = (TextView) view.findViewById(R.id.aboutText);
-            if(Auther) {
+            if (Auther) {
                 tv.setText(R.string.About);
-            }else
-            {
+            } else {
                 tv.setText(R.string.ImageViewAbout);//Thanks for ImageViewer Auther:Alan
             }
             setTitle(R.string.app_version);

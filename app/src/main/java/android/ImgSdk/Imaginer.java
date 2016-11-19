@@ -20,6 +20,7 @@ public final class Imaginer {
     private int curX;
     private int curY;
     private String TAG = "IMAGINER";
+    private boolean nextStatus;
 
     public Imaginer(Bitmap bitmap) {
         this.bitmap = bitmap;
@@ -30,6 +31,7 @@ public final class Imaginer {
         this.boundrys = null;
         this.curX = 0;
         this.curY = 0;
+        this.nextStatus = true;
     }
 
     public synchronized boolean init() {
@@ -42,13 +44,13 @@ public final class Imaginer {
 
     public boolean JgetBoundrys() {
         boundrys = getBoundrys();
-        if(boundrys==null)
+        if (boundrys == null)
             return false;
         return true;
     }
 
     public int[] gotoNextPoint() {
-        int next[] = new int[3];
+        int next[] = new int[]{-1, -1, -1};
         int linesize = 0;
         for (int i = curX; i < boundrys.length; ++i) {
             linesize = boundrys[i].length;
@@ -80,7 +82,14 @@ public final class Imaginer {
             }
         }
         Log.d(TAG, "next pixle is x:" + next[0] + "\ty:" + next[1] + "\tedge:" + next[2]);
+        if (next[0] == -1) {
+            nextStatus = false;
+        }
         return next;
+    }
+
+    public boolean getNextStatus() {
+        return nextStatus;
     }
 
     public int getStartX() {
@@ -94,8 +103,9 @@ public final class Imaginer {
     public synchronized void finalize() {
         cfinalize();
     }
-    public int[] moveFoucs(float x, float y,float mx,float my) {
-            return moveBoundry((int)x,(int)y,(int)mx,(int)my);
+
+    public int[] moveFoucs(float x, float y, float mx, float my) {
+        return moveBoundry((int) x, (int) y, (int) mx, (int) my);
     }
 
     public int[] cutAll(float x, float y) {
@@ -133,11 +143,11 @@ public final class Imaginer {
      */
     public native long[][] getBoundrys();
 
-    public native  int[] moveBoundry(int x,int y,int mx,int my);
+    public native int[] moveBoundry(int x, int y, int mx, int my);
 
-    public native  int[] cutOut(int x,int y);
+    public native int[] cutOut(int x, int y);
 
-    public native  int[] showAll();
+    public native int[] showAll();
 
     private native void cfinalize();
 }

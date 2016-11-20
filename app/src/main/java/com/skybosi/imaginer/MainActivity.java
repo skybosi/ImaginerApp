@@ -204,7 +204,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 toolbar.setLogo(R.mipmap.imaginer);
                 break;
             case R.id.nextPoint:
-                if (!imaginer.getNextStatus()) {
+                if (imaginer !=  null && !imaginer.getNextStatus()) {
                     mHandler.sendEmptyMessage(4);
                 } else {
                     if (tmpSteps <= 1)

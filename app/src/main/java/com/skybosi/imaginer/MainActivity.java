@@ -198,7 +198,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
             //    break;
             case R.id.openSD:
                 loadFile();
-                nextSteps = 0;
+                nextSteps = tmpSteps = 0;
                 ((Button) findViewById(R.id.nextPoint)).setText("NEXT");
                 lockDRAG = false;
                 toolbar.setLogo(R.mipmap.imaginer);
@@ -583,7 +583,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_CODE) {
-            if (resultCode == FileView.RESULT_CODE) {
+            if (resultCode == ImageViewer.RESULT_CODE) {
                 Bundle bundle = data.getExtras();
                 bmpFile = bundle.getString("filename");
                 //Toast.makeText(MainActivity.this, bmpFile, Toast.LENGTH_LONG).show();

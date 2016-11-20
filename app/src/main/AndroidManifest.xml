@@ -15,7 +15,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".ImageViewerActivity">
+        <activity android:name=".ImageViewer">
             <intent-filter>
                 <action android:name="android.intent.action.FILE" />
                 <category android:name="android.intent.category.DEFAULT" />

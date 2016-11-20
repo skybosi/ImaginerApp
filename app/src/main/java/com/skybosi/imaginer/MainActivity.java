@@ -50,7 +50,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     private int curWitdth = 0;
     private int curHeight = 0;
     //for log and exit
-    private String TAG = "IMAGINER";
+    public final static String TAG = "IMAGINER";
     private static boolean isExit = false;
     //for show image at surfaceview
     private SurfaceHolder holder = null;
@@ -204,7 +204,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
                 toolbar.setLogo(R.mipmap.imaginer);
                 break;
             case R.id.nextPoint:
-                if (imaginer !=  null && !imaginer.getNextStatus()) {
+                if (imaginer != null && !imaginer.getNextStatus()) {
                     mHandler.sendEmptyMessage(4);
                 } else {
                     if (tmpSteps <= 1)
@@ -357,7 +357,7 @@ public class MainActivity extends Activity implements View.OnClickListener, View
         int menuItemId = item.getItemId();
         switch (menuItemId) {
             case R.id.about:
-                new AboutDialog(this, true).show();
+                new AboutDialog(this).show();
                 break;
             case R.id.nextSpeed:
                 //inputDialog("You Can set next speed(ms)");
@@ -871,15 +871,11 @@ public class MainActivity extends Activity implements View.OnClickListener, View
     }
 
     public static class AboutDialog extends AlertDialog {
-        public AboutDialog(Context context, boolean Auther) {
+        public AboutDialog(Context context) {
             super(context);
             final View view = getLayoutInflater().inflate(R.layout.about, null);
             TextView tv = (TextView) view.findViewById(R.id.aboutText);
-            if (Auther) {
-                tv.setText(R.string.About);
-            } else {
-                tv.setText(R.string.ImageViewAbout);//Thanks for ImageViewer Auther:Alan
-            }
+            tv.setText(R.string.About);
             setTitle(R.string.app_version);
             setView(view);
         }

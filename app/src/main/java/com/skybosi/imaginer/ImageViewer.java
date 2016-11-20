@@ -1,5 +1,7 @@
 package com.skybosi.imaginer;
 
+import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -8,11 +10,11 @@ import android.os.Environment;
 import android.os.Message;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.text.format.Formatter;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.HorizontalScrollView;
@@ -25,7 +27,9 @@ import android.widget.Toast;
 import android.os.Handler;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedList;
 
 public class ImageViewer extends Activity implements View.OnClickListener, Toolbar.OnMenuItemClickListener {
@@ -46,6 +50,7 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
     private long firstClick = 0;
     private long secondClick = 0;
     private String loadPath = null;
+    private int curpos = 0;
     private int curMaxCount = 0;
     private boolean loadFinish = false;
 
@@ -67,7 +72,7 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
         if (Environment.MEDIA_MOUNTED.equals(state)) {
             mSdcardPath = Environment.getExternalStorageDirectory().toString();
         } else {
-            Log.e("Imaginer", "SDCARD is not MOUNTED");
+            Log.e(MainActivity.TAG, "SDCARD is not MOUNTED");
         }
         mHandler = new Handler() {
             @Override
@@ -78,6 +83,8 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
                         isExit = false;
                         break;
                     case 1:
+                        (findViewById(R.id.loading)).setVisibility(View.GONE);
+                        ((ImageView) findViewById(R.id.imageViewShow)).setVisibility(View.VISIBLE);
                         loadImage(mImgPathList, 10);
                         toolTV.setEllipsize(TextUtils.TruncateAt.MARQUEE);
                         break;
@@ -110,7 +117,7 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
                 mSdcardPath = Environment.getExternalStorageDirectory().toString();
                 //mSdcardPath = "/storage";
             } else {
-                Log.e("Imaginer", "SDCARD is not MOUNTED");
+                Log.e(MainActivity.TAG, "SDCARD is not MOUNTED");
             }
             Thread thread = new Thread(new Runnable() {
                 @Override
@@ -123,12 +130,14 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
             });
             thread.start();
         } else {
+            (findViewById(R.id.loading)).setVisibility(View.GONE);
+            ((ImageView) findViewById(R.id.imageViewShow)).setVisibility(View.VISIBLE);
             loadImage(mImgPathList, 10);
         }
     }
 
     private synchronized void loadImage(ArrayList<String> imagelist, int count) {
-        if (curMaxCount >= imagelist.size() - 1) {
+        if (loadFinish || curMaxCount >= imagelist.size() - 1) {
             loadFinish = true;
             mHandler.sendEmptyMessage(5);
             return;
@@ -136,8 +145,6 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
         if (WandH == 0) {
             WandH = HSlView.getHeight();
         }
-        (findViewById(R.id.loading)).setVisibility(View.GONE);
-        ((ImageView) findViewById(R.id.imageViewShow)).setVisibility(View.VISIBLE);
         File file = null;
         Bitmap bm = null;
         LayoutInflater inflater = LayoutInflater.from(this);
@@ -146,40 +153,32 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
             ImageView imageView = (ImageView) linearLayout.findViewById(R.id.imageView);
             imageView.setId(i + 1);
             //set image
-            file = new File(imagelist.get(i));
-            bm = BitmapFactory.decodeFile(imagelist.get(i), getHeapOpts(file));
-            if (bm != null) {
-                imageView.setImageBitmap(bm);
-                imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                imageView.setLayoutParams(new LayoutParams(WandH, WandH));
-                imageView.setOnClickListener(new OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        loadPath = mImgPathList.get(view.getId() - 1);
-                        toolTV.setText(loadPath);
-                        imageViewShow.setImageBitmap(BitmapFactory.decodeFile(loadPath));
-                    }
-                });
-                imageView.setOnTouchListener(new View.OnTouchListener() {
-                    @Override
-                    public boolean onTouch(View v, MotionEvent ev) {
-                        //mHandler.sendEmptyMessage(4);
-                        if (!loadFinish) {
-                            switch (ev.getAction()) {
-                                case MotionEvent.ACTION_DOWN:
-                                case MotionEvent.ACTION_MOVE:
-                                case MotionEvent.ACTION_UP:
-                                    mHandler.sendEmptyMessage(4);
-                                    break;
-                            }
+            try {
+                file = new File(imagelist.get(i));
+                bm = BitmapFactory.decodeFile(imagelist.get(i), getHeapOpts(file));
+                if (bm != null) {
+                    imageView.setImageBitmap(bm);
+                    imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                    imageView.setLayoutParams(new LayoutParams(WandH, WandH));
+                    imageView.setOnClickListener(new OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            curpos = view.getId() - 1;
+                            loadPath = mImgPathList.get(curpos);
+                            toolTV.setText(loadPath);
+                            imageViewShow.setImageBitmap(BitmapFactory.decodeFile(loadPath));
                         }
-                        return false;
-                    }
-                });
-                linearLayout1.addView(linearLayout);
+                    });
+                    linearLayout1.addView(linearLayout);
+                }
+            } catch (Exception e) {
+                loadFinish = true;
+                Log.e(MainActivity.TAG, e.toString() + i);
             }
         }
         curMaxCount += count;
+        //mHandler.sendEmptyMessage(4);
+        mHandler.sendEmptyMessageDelayed(4, 500);
     }
 
     public void traverseFolder1(String path, ArrayList<String> imagelist) {
@@ -215,11 +214,11 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
                         }
                     }
                 } catch (Exception e) {
-                    Log.e("Imaginer", e.toString() + "this folder " + temp_file.getAbsolutePath().toString() + " is empty");
+                    Log.e(MainActivity.TAG, e.toString() + "this folder " + temp_file.getAbsolutePath().toString() + " is empty");
                 }
             }
         } else {
-            Log.e("Imaginer", "文件不存在!");
+            Log.e(MainActivity.TAG, "文件不存在!");
         }
     }
 
@@ -270,13 +269,13 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
         switch (v.getId()) {
             case R.id.imageViewShow:
                 if (imageViewShow != null) {
+                    if (HSlView.getVisibility() != View.GONE)
+                        HSlView.setVisibility(View.GONE);
+                    else
+                        HSlView.setVisibility(View.VISIBLE);
                     clickcount++;
                     if (clickcount == 1) {
                         firstClick = System.currentTimeMillis();
-                        if (HSlView.getVisibility() != View.GONE)
-                            HSlView.setVisibility(View.GONE);
-                        else
-                            HSlView.setVisibility(View.VISIBLE);
                     } else if (clickcount == 2) {
                         secondClick = System.currentTimeMillis();
                         if (secondClick - firstClick < 1000) {
@@ -302,13 +301,62 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
         int menuItemId = item.getItemId();
         switch (menuItemId) {
             case R.id.about:
-                //new MainActivity.AboutDialog(this, false).show();
-                break;
-            case R.id.setColor:
+                onDetailBtnDown(curpos);
                 break;
         }
         return false;
     }
+
+    //button down callbacks
+    private void onDetailBtnDown(int pos) {
+        // TODO Auto-generated method stub
+        final View d = View.inflate(this, R.layout.detailsview, null);
+        //Thumbnail View
+        ImageView imageView = (ImageView) d.findViewById(
+                R.id.details_thumbnail_image);
+        Bitmap bm = BitmapFactory.decodeFile(mImgPathList.get(pos));
+        imageView.setImageBitmap(bm);
+
+        //Text View of Image Title
+        TextView txTitle = (TextView) d.findViewById(R.id.details_image_path);
+        txTitle.setText(mImgPathList.get(pos));
+
+        //the picture resolution value
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+        String pictureSize = width + "*" + height;
+        setDetailsValue(d, pictureSize, R.id.details_resolution_value);
+
+        //the picture size
+        String size = Formatter.formatFileSize(this, height * width);
+        setDetailsValue(d, size, R.id.details_file_size_value);
+
+        //get date
+        String value = null;
+        File f = new File(mImgPathList.get(pos));
+        long lastMod = f.lastModified();
+        if (lastMod != 0) {
+            Date date = new Date(lastMod);
+            SimpleDateFormat dateFormat = new SimpleDateFormat();
+            value = dateFormat.format(date);
+        }
+        if (value != null) {
+            setDetailsValue(d, value, R.id.details_date_taken_value);
+        } else {
+            hideDetailsRow(d, R.id.details_date_taken_row);
+        }
+        AlertDialog.Builder build = new Builder(ImageViewer.this);
+        build.setTitle("详细信息").setView(d).show();
+    }
+
+    private static void setDetailsValue(View d, String text, int valueId) {
+        ((TextView) d.findViewById(valueId)).setText(text);
+    }
+
+    private static void hideDetailsRow(View d, int rowId) {
+        d.findViewById(rowId).setVisibility(View.GONE);
+    }
+
 }
 
 

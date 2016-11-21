@@ -115,7 +115,7 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
             String state = Environment.getExternalStorageState();
             if (Environment.MEDIA_MOUNTED.equals(state)) {
                 mSdcardPath = Environment.getExternalStorageDirectory().toString();
-                //mSdcardPath = "/storage";
+                //mSdcardPath ="/storage";
             } else {
                 Log.e(MainActivity.TAG, "SDCARD is not MOUNTED");
             }
@@ -173,7 +173,8 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
                 }
             } catch (Exception e) {
                 loadFinish = true;
-                Log.e(MainActivity.TAG, e.toString() + i);
+                Log.e(MainActivity.TAG, e.toString() + "out of index " + i);
+                return;
             }
         }
         curMaxCount += count;
@@ -185,40 +186,47 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
         File file = new File(path);
         if (file.exists()) {
             LinkedList<File> list = new LinkedList<File>();
-            File[] files = file.listFiles();
-            for (File file2 : files) {
-                if (file2.isDirectory() && !file2.isHidden()) {
-                    list.add(file2);
-                } else {
-                    if (isAnImageFile(file2.getAbsolutePath())) {
-                        imagelist.add(file2.getAbsolutePath());
-                    }
-                }
-            }
-            File temp_file;
-            while (!list.isEmpty()) {
-                temp_file = list.removeFirst();
-                Message msg = Message.obtain();
-                msg.what = 3;
-                msg.obj = temp_file.getAbsolutePath().toString();
-                mHandler.sendMessage(msg);
-                try {
-                    files = temp_file.listFiles();
-                    for (File file2 : files) {
-                        if (file2.isDirectory()) {
-                            list.add(file2);
-                        } else {
-                            if (isAnImageFile(file2.getAbsolutePath())) {
-                                imagelist.add(file2.getAbsolutePath());
-                            }
+            try {
+                File[] files = file.listFiles();
+                for (File file2 : files) {
+                    if (file2.isDirectory() && !file2.isHidden() &&
+                            !file2.getAbsolutePath().toLowerCase().contains("self")) {
+                        list.add(file2);
+                    } else {
+                        if (isAnImageFile(file2.getAbsolutePath())) {
+                            imagelist.add(file2.getAbsolutePath());
                         }
                     }
-                } catch (Exception e) {
-                    Log.e(MainActivity.TAG, e.toString() + "this folder " + temp_file.getAbsolutePath().toString() + " is empty");
                 }
+                File temp_file;
+                while (!list.isEmpty()) {
+                    temp_file = list.removeFirst();
+                    Message msg = Message.obtain();
+                    msg.what = 3;
+                    msg.obj = temp_file.getAbsolutePath().toString();
+                    mHandler.sendMessage(msg);
+                    try {
+                        files = temp_file.listFiles();
+                        for (File file2 : files) {
+                            if (file2.isDirectory()) {
+                                list.add(file2);
+                            } else {
+                                if (isAnImageFile(file2.getAbsolutePath())) {
+                                    imagelist.add(file2.getAbsolutePath());
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.e(MainActivity.TAG, e.toString() + "this folder " + temp_file.getAbsolutePath().toString() + " is empty");
+                        continue;
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(MainActivity.TAG, e.toString() + " 文件不存在1");
             }
-        } else {
-            Log.e(MainActivity.TAG, "文件不存在!");
+        }else
+        {
+            Log.e(MainActivity.TAG, path + " 文件不存在2");
         }
     }
 

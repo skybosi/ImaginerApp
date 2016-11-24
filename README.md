@@ -19,9 +19,9 @@ likely to will stand out as a separate small guy
 
 ## Three Branch
 
-1. master
-   - It's a File browser to choose image
-   - Maybe find a Image is a problem
+1. **master**
+   - **It's a File browser to choose image**
+   - **Maybe find a Image is a problem**
 1. GalleryView
    - It's a image browser to choose image,use Gallery
    - Loading a large number of pictures is very not smooth

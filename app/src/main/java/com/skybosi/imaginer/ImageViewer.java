@@ -12,15 +12,11 @@ import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.text.format.Formatter;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.LinearLayout.LayoutParams;
 import android.widget.TextView;
 import android.app.Activity;
 import android.widget.Toast;
@@ -38,7 +34,8 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
     private static LinearLayout linearLayout1;
     private boolean isExit = false;
     private ImageView imageViewShow;
-    private HorizontalScrollView HSlView = null;
+    private MyHorizontalScrollView HSlView = null;
+    private HorizontalScrollViewAdapter mAdapter;
     private Toolbar toolbar = null;
     private TextView toolTV = null;
     //sdcard Path
@@ -53,6 +50,10 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
     private int curpos = 0;
     private int curMaxCount = 0;
     private boolean loadFinish = false;
+    private float firstX = 0;
+    private float firstY = 0;
+    private float secondX = 0;
+    private float secondY = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,11 +64,11 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
         toolbar.setOnMenuItemClickListener(this);
         toolTV = ((TextView) findViewById(R.id.toolbar_image));
         hiddenEditMenu(toolbar.getMenu());
-        // 获取组件
         linearLayout1 = (LinearLayout) findViewById(R.id.linearLayout1);
         imageViewShow = (ImageView) findViewById(R.id.imageViewShow);
-        HSlView = (HorizontalScrollView) findViewById(R.id.HSView1);
+        HSlView = (MyHorizontalScrollView) findViewById(R.id.HSView1);
         imageViewShow.setOnClickListener(this);
+        //遍历sdcard，获取所有图片的绝对路径
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
             mSdcardPath = Environment.getExternalStorageDirectory().toString();
@@ -84,8 +85,8 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
                         break;
                     case 1:
                         (findViewById(R.id.loading)).setVisibility(View.GONE);
-                        ((ImageView) findViewById(R.id.imageViewShow)).setVisibility(View.VISIBLE);
-                        loadImage(mImgPathList, 10);
+                        imageViewShow.setVisibility(View.VISIBLE);
+                        loadImage();
                         toolTV.setEllipsize(TextUtils.TruncateAt.MARQUEE);
                         break;
                     case 2:
@@ -96,9 +97,6 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
                         toolTV.setEllipsize(TextUtils.TruncateAt.END);
                         toolTV.setText(filepath);
                         break;
-                    case 4:
-                        loadImage(mImgPathList, 10);
-                        break;
                     case 5:
                         Toast.makeText(getApplication(), "所有图片加载完成", Toast.LENGTH_LONG).show();
                         break;
@@ -108,6 +106,35 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
             }
         };
         initAll();
+    }
+
+    private synchronized void loadImage() {
+        WandH = HSlView.getHeight();
+        if (WandH == 0) {
+            WandH = 114;
+        }
+        mAdapter = new HorizontalScrollViewAdapter(this, mImgPathList, WandH);
+        //添加滚动回调
+        HSlView.setCurrentImageChangeListener(new MyHorizontalScrollView.CurrentImageChangeListener() {
+            @Override
+            public void onCurrentImgChanged(int position,
+                                            View viewIndicator) {
+                loadPath = mImgPathList.get(position);
+                toolTV.setText(loadPath);
+                imageViewShow.setImageBitmap(BitmapFactory.decodeFile(loadPath));
+            }
+        });
+        //添加点击回调
+        HSlView.setOnItemClickListener(new MyHorizontalScrollView.OnItemClickListener() {
+            @Override
+            public void onClick(View view, int position) {
+                loadPath = mImgPathList.get(position);
+                toolTV.setText(loadPath);
+                imageViewShow.setImageBitmap(BitmapFactory.decodeFile(loadPath));
+            }
+        });
+        //设置适配器
+        HSlView.initDatas(mAdapter);
     }
 
     private void initAll() {
@@ -131,55 +158,9 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
             thread.start();
         } else {
             (findViewById(R.id.loading)).setVisibility(View.GONE);
-            ((ImageView) findViewById(R.id.imageViewShow)).setVisibility(View.VISIBLE);
-            loadImage(mImgPathList, 10);
+            imageViewShow.setVisibility(View.VISIBLE);
+            loadImage();
         }
-    }
-
-    private synchronized void loadImage(ArrayList<String> imagelist, int count) {
-        if (loadFinish || curMaxCount >= imagelist.size() - 1) {
-            loadFinish = true;
-            mHandler.sendEmptyMessage(5);
-            return;
-        }
-        if (WandH == 0) {
-            WandH = HSlView.getHeight();
-        }
-        File file = null;
-        Bitmap bm = null;
-        LayoutInflater inflater = LayoutInflater.from(this);
-        for (int i = curMaxCount; i <= count + curMaxCount; i++) {
-            LinearLayout linearLayout = (LinearLayout) inflater.inflate(R.layout.layout, null);
-            ImageView imageView = (ImageView) linearLayout.findViewById(R.id.imageView);
-            imageView.setId(i + 1);
-            //set image
-            try {
-                file = new File(imagelist.get(i));
-                bm = BitmapFactory.decodeFile(imagelist.get(i), getHeapOpts(file));
-                if (bm != null) {
-                    imageView.setImageBitmap(bm);
-                    imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                    imageView.setLayoutParams(new LayoutParams(WandH, WandH));
-                    imageView.setOnClickListener(new OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            curpos = view.getId() - 1;
-                            loadPath = mImgPathList.get(curpos);
-                            toolTV.setText(loadPath);
-                            imageViewShow.setImageBitmap(BitmapFactory.decodeFile(loadPath));
-                        }
-                    });
-                    linearLayout1.addView(linearLayout);
-                }
-            } catch (Exception e) {
-                loadFinish = true;
-                Log.e(MainActivity.TAG, e.toString() + "out of index " + i);
-                return;
-            }
-        }
-        curMaxCount += count;
-        //mHandler.sendEmptyMessage(4);
-        mHandler.sendEmptyMessageDelayed(4, 500);
     }
 
     public void traverseFolder1(String path, ArrayList<String> imagelist) {
@@ -224,8 +205,7 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
             } catch (Exception e) {
                 Log.e(MainActivity.TAG, e.toString() + " 文件不存在1");
             }
-        }else
-        {
+        } else {
             Log.e(MainActivity.TAG, path + " 文件不存在2");
         }
     }
@@ -239,26 +219,6 @@ public class ImageViewer extends Activity implements View.OnClickListener, Toolb
             return true;
         }
         return false;
-    }
-
-    // 图片加载的类
-    public static BitmapFactory.Options getHeapOpts(File file) {
-        BitmapFactory.Options opts = new BitmapFactory.Options();
-        // 数字越大读出的图片占用的heap必须越小，不然总是溢出
-        if (file.length() < 20480) { // 0-20k
-            opts.inSampleSize = 1;// 这里意为缩放的大小
-        } else if (file.length() < 51200) { // 20-50k
-            opts.inSampleSize = 2;
-        } else if (file.length() < 307200) { // 50-300k
-            opts.inSampleSize = 4;
-        } else if (file.length() < 819200) { // 300-800k
-            opts.inSampleSize = 6;
-        } else if (file.length() < 1048576) { // 800-1024k
-            opts.inSampleSize = 8;
-        } else {
-            opts.inSampleSize = 10;
-        }
-        return opts;
     }
 
     private void hiddenEditMenu(Menu mMenu) {

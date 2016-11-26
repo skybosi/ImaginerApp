@@ -61,7 +61,7 @@
         android:paddingTop="10dp"
         android:visibility="invisible" />
 
-    <HorizontalScrollView
+    <com.skybosi.imaginer.MyHorizontalScrollView
         android:id="@+id/HSView1"
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -69,13 +69,31 @@
         android:layout_weight="0.1"
         android:background="#5c243d36"
         android:paddingTop="5dp"
-        android:scrollbars="horizontal">
-
+        android:scrollbars="horizontal" >
         <LinearLayout
             android:id="@+id/linearLayout1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            android:orientation="horizontal"></LinearLayout>
-    </HorizontalScrollView>
+            android:orientation="horizontal">
+        </LinearLayout>
+    </com.skybosi.imaginer.MyHorizontalScrollView>
+
+    <!--<HorizontalScrollView-->
+        <!--android:id="@+id/HSView1"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="0dp"-->
+        <!--android:layout_gravity="bottom"-->
+        <!--android:layout_weight="0.1"-->
+        <!--android:background="#5c243d36"-->
+        <!--android:paddingTop="5dp"-->
+        <!--android:scrollbars="horizontal">-->
+
+        <!--<LinearLayout-->
+            <!--android:id="@+id/linearLayout1"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_gravity="center_vertical"-->
+            <!--android:orientation="horizontal"></LinearLayout>-->
+    <!--</HorizontalScrollView>-->
 </LinearLayout>  

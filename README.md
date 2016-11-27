@@ -26,8 +26,9 @@ likely to will stand out as a separate small guy
    - It's a image browser to choose image,use Gallery
    - Loading a large number of pictures is very not smooth
 1. **HSView**
-   - **It's a image browser to choose image,use HorizontalScrollView**
+   - **It's a image browser to choose image,use HorizontalScrollView**
    - **Loading a large number of pictures is smooth,but maybe crash**
+   - **This is a Imaginer.apk You can click [Here](https://github.com/skybosi/ImaginerApp/blob/HSView/ImaginerHSV.apk?raw=true) to download!**
 
 
 
